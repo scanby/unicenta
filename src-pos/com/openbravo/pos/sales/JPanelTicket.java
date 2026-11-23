@@ -48,6 +48,7 @@ import com.openbravo.pos.ticket.ProductInfoExt;
 import com.openbravo.pos.ticket.TaxInfo;
 import com.openbravo.pos.ticket.TicketInfo;
 import com.openbravo.pos.ticket.TicketLineInfo;
+import com.openbravo.pos.ticket.TicketWarranty;
 import com.openbravo.pos.util.AltEncrypter;
 import com.openbravo.pos.util.InactivityListener;
 import com.openbravo.pos.util.JRPrinterAWT300;
@@ -1421,16 +1422,8 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
 // John L July 2014
 //    private void warrantyCheck(TicketInfo ticket){
     private boolean warrantyCheck(TicketInfo ticket) {
-        // The old implementation returned on the first line, so warranty
-        // products in lines 2..n were never detected.
-        warrantyPrint = false;
-        for (int i = 0; i < ticket.getLinesCount(); i++) {
-            if (ticket.getLine(i).isProductWarranty()) {
-                warrantyPrint = true;
-                return true;
-            }
-        }
-        return false;
+        warrantyPrint = TicketWarranty.containsWarranty(ticket);
+        return warrantyPrint;
     }
    
     /**

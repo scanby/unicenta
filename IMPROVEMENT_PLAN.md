@@ -104,14 +104,27 @@ usa la copia del JAR. Las plantillas Velocity de impresión siguen viniendo de l
 **Nota operativa:** las personalizaciones legítimas de scripts/menu deben versionarse como plantillas en el
 JAR o habilitarse de forma explícita con `unicenta.scripts.allowdb=true` (se registra un aviso en el log).
 
-### Fase 4 — Calidad y arquitectura
-- Extraer de `JPanelTicket` tres colaboradores: `TicketStateMachine`, `TicketPricingService`, `TicketPrintService`.
-- Dividir `JPanelConfigPeripheral` por tipo de dispositivo y `DataLogicSales` por dominio (_product-, _stock-, _sales-).
-- Eliminar clases duplicadas tras comparar con tests de caracterización.
-- Sustituir `Vector`/tipos raw por genéricos; eliminar código comentado muerto.
-- Mover trabajo pesado (compile Jasper, import CSV) fuera del EDT con `SwingWorker`.
-- Migrar a Maven/Gradle con dependencias versionadas y pipeline CI.
-- **Criterio:** ninguna clase > 800 líneas; cobertura > 60 % en `util` y `loader`; build reproducible.
+### Fase 4 — Calidad y arquitectura 🔶 EN CURSO
+
+**Implementado en esta entrega:**
+
+| Cambio | Archivos |
+|---|---|
+| Extracción de la lógica de garantías a un colaborador puro y testeable (`TicketWarranty`) | nuevo `ticket/TicketWarranty.java`, `sales/JPanelTicket.java` |
+| Extracción de la carga/compilación de Jasper a `JasperReportLoader`, preparando el trabajo asíncrono | nuevo `reports/JasperReportLoader.java`, `reports/JPanelReport.java` |
+| Eliminación de 3 clases duplicadas/muertas sin referencias (`TicketLineInfo1`, `SalesDetailInfo_1`, `TicketsBagRestaurantMap`); `PaymentInfoCash_original` **se conserva** porque sí se usa | `git rm` |
+| Pipeline CI con GitHub Actions (JDK 8 + Ant + `ant clean test dist` + artefactos) | nuevo `.github/workflows/ci.yml` |
+| 6 tests nuevos (garantías en líneas posteriores, loader de reportes) | `test/.../TicketWarrantyTest.java`, `test/.../JasperReportLoaderTest.java` |
+
+**Pendiente en Fase 4:**
+- Extraer `TicketStateMachine`, `TicketPricingService` y `TicketPrintService` completos de `JPanelTicket` (2.400 líneas).
+- Dividir `JPanelConfigPeripheral` (1.941 líneas) y `DataLogicSales` (1.648 líneas) por dominio.
+- Sustituir tipos raw en `BaseSentence`/`SentenceList` y limpiar código comentado muerto (documentado como `TODO`).
+- Pasar la compilación Jasper y la importación CSV a `SwingWorker` (el loader ya está aislado; falta el cambio de hilo).
+- Migrar a Maven/Gradle manteniendo Ant como build de contingencia.
+
+**Verificación:** `ant -f build.xml clean test` → **38/38 tests OK**.
+**Criterio final (aún no alcanzado):** ninguna clase > 800 líneas; cobertura > 60 % en `util` y `loader`; build reproducible.
 
 ### Fase 5 — Datos
 - Sustituir `NormalBuilder`/`QBFBuilder` por `PreparedSentence` en todos los DAO y reportes.
@@ -154,7 +167,7 @@ ant -f build.xml clean test
 ant -f build.xml dist
 ```
 
-Resultado: **32 tests OK** (16 de Fase 1 + 6 de Fase 2 + 10 de Fase 3), JAR y ambos ZIP de distribución generados.
+Resultado: **38 tests OK** (16 de Fase 1 + 6 de Fase 2 + 10 de Fase 3 + 6 de Fase 4), JAR y ambos ZIP de distribución generados.
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 

@@ -30,8 +30,6 @@ import com.openbravo.pos.sales.TaxesLogic;
 import com.openbravo.pos.util.JRViewer300;
 import java.awt.BorderLayout;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,8 +38,6 @@ import java.util.ResourceBundle;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import net.sf.jasperreports.engine.*;
-import net.sf.jasperreports.engine.design.JasperDesign;
-import net.sf.jasperreports.engine.xml.JRXmlLoader;
 
 /**
  *
@@ -98,20 +94,8 @@ public abstract class JPanelReport extends JPanel implements JPanelView, BeanFac
         
         add(reportviewer, BorderLayout.CENTER);
         
-        try {     
-            
-            InputStream in = getClass().getResourceAsStream(getReport() + ".ser");
-            if (in == null) {      
-                // read and compile the report
-                JasperDesign jd = JRXmlLoader.load(getClass().getResourceAsStream(getReport() + ".jrxml"));            
-                jr = JasperCompileManager.compileReport(jd);    
-            } else {
-// JG 16 May 12 use try-with-resources
-                try (ObjectInputStream oin = new ObjectInputStream(in)) {
-                    jr = (JasperReport) oin.readObject();
-                }
-            }
-// JG 16 May 12 use multicatch
+        try {
+            jr = JasperReportLoader.load(getClass(), getReport());
         } catch (JRException | IOException | ClassNotFoundException e) {
             MessageInf msg = new MessageInf(MessageInf.SGN_WARNING, AppLocal.getIntString("message.cannotloadreport"), e);
             msg.show(this);
