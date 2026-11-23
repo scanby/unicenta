@@ -26,6 +26,7 @@ import com.openbravo.pos.customers.CustomerInfo;
 import com.openbravo.pos.scripting.ScriptEngine;
 import com.openbravo.pos.scripting.ScriptException;
 import com.openbravo.pos.scripting.ScriptFactory;
+import com.openbravo.pos.scripting.ScriptSecurity;
 import com.openbravo.pos.util.Hashcypher;
 import com.openbravo.pos.util.StringUtils;
 import java.awt.CardLayout;
@@ -115,7 +116,11 @@ public class JPrincipalApp extends javax.swing.JPanel implements AppUserView {
         
         try {
 
-         m_jPanelLeft.setViewportView(getScriptMenu(m_dlSystem.getResourceAsText("Menu.Root")));       
+         // Only execute the menu script if it matches the bundled template.
+         String menuScript = ScriptSecurity.resolve("Menu.Root",
+                 m_dlSystem.getResourceAsText("Menu.Root"),
+                 "/com/openbravo/pos/templates/Menu.Root.txt");
+         m_jPanelLeft.setViewportView(getScriptMenu(menuScript));
         } catch (ScriptException e) {
             logger.log(Level.SEVERE, "Cannot read Menu.Root resource. Trying default menu.", e);
             try {
@@ -129,6 +134,9 @@ public class JPrincipalApp extends javax.swing.JPanel implements AppUserView {
 
     private Component getScriptMenu(String menutext) throws ScriptException {
 
+        if (menutext == null) {
+            throw new ScriptException("No trusted menu script is available");
+        }
         ScriptMenu menu = new ScriptMenu();
 
         ScriptEngine eng = ScriptFactory.getScriptEngine(ScriptFactory.BEANSHELL);

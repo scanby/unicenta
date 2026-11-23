@@ -43,6 +43,7 @@ import com.openbravo.pos.scale.ScaleException;
 import com.openbravo.pos.scripting.ScriptEngine;
 import com.openbravo.pos.scripting.ScriptException;
 import com.openbravo.pos.scripting.ScriptFactory;
+import com.openbravo.pos.scripting.ScriptSecurity;
 import com.openbravo.pos.ticket.ProductInfoExt;
 import com.openbravo.pos.ticket.TaxInfo;
 import com.openbravo.pos.ticket.TicketInfo;
@@ -1560,7 +1561,16 @@ if (pickupSize!=null && (Integer.parseInt(pickupSize) >= tmpPickupId.length())){
         // resource here is guaranteed to be not null
          try {
             scr.setSelectedIndex(m_ticketlines.getSelectedIndex());
-            return scr.evalScript(dlSystem.getResourceAsXML(resource), args);                
+            // A script read from RESOURCES is only executed when it still
+             // matches the copy bundled with the application.
+             String code = ScriptSecurity.resolve(resource, dlSystem.getResourceAsXML(resource), null);
+             if (code == null) {
+                 MessageInf msg = new MessageInf(MessageInf.SGN_WARNING,
+                         AppLocal.getIntString("message.cannotexecute"));
+                 msg.show(this);
+                 return msg;
+             }
+             return scr.evalScript(code, args);                
         } catch (ScriptException e) {
             MessageInf msg = new MessageInf(MessageInf.SGN_WARNING, AppLocal.getIntString("message.cannotexecute"), e);
             msg.show(this);
@@ -1769,19 +1779,24 @@ if (pickupSize!=null && (Integer.parseInt(pickupSize) >= tmpPickupId.length())){
             
         ScriptEngine script = ScriptFactory.getScriptEngine(ScriptFactory.BEANSHELL);            
 
-// Mod JG Sept 2011 - Used inside scripts i.e.: Stock Checking
+        // Scripts must never receive the decrypted database password. The
+        // variable is kept (redacted) for compatibility with old stock scripts;
+        // an explicit system property is required to expose the real value.
         String sDBUser = m_App.getProperties().getProperty("db.user");
-        String sDBPassword = m_App.getProperties().getProperty("db.password");
-        
-        if (sDBUser != null && sDBPassword != null && sDBPassword.startsWith("crypt:")) {
-            AltEncrypter cypher = new AltEncrypter("cypherkey" + sDBUser);
-            sDBPassword = cypher.decrypt(sDBPassword.substring(6));
-        } 
+        String sDBPassword = "<redacted>";
+        if (Boolean.getBoolean(ScriptSecurity.EXPOSE_DB_PASSWORD_PROPERTY)) {
+            String storedPassword = m_App.getProperties().getProperty("db.password");
+            if (sDBUser != null && storedPassword != null && storedPassword.startsWith("crypt:")) {
+                AltEncrypter cypher = new AltEncrypter("cypherkey" + sDBUser);
+                sDBPassword = cypher.decrypt(storedPassword.substring(6));
+            } else {
+                sDBPassword = storedPassword;
+            }
+        }
             script.put("hostname", m_App.getProperties().getProperty("machine.hostname"));
-            script.put("dbURL", m_App.getProperties().getProperty("db.URL")); 
+            script.put("dbURL", m_App.getProperties().getProperty("db.URL"));
             script.put("dbUser", sDBUser);
             script.put("dbPassword", sDBPassword);
-// End mod
             
             script.put("ticket", ticket);
             script.put("place", ticketext);

@@ -88,13 +88,21 @@ Pendiente de verificación externa con `nmap` desde otra máquina.
 **Nota operativa:** al guardar la configuración, los valores `crypt:` antiguos se reescriben automáticamente
 en formato `v2$`. Hasta entonces siguen siendo legibles con el descifrador legacy.
 
-### Fase 3 — Scripts y ejecución dinámica
-- Mover menús, plantillas y definiciones de reportes de la tabla `RESOURCES` a archivos versionados;
-  tratar cualquier script en BD como datos no ejecutables.
-- Sustituir BeanShell por un intérprete acotado (expresiones de un DSL propio) o, como mínimo, sandbox con
-  `SecurityManager` + whitelist de clases.
-- Eliminar `Class.forName(nombreDesdeBD)` en `JRootApp.getBean()`: tabla blanca de clases permitidas.
-- **Criterio:** modificar `RESOURCES` no permite ejecutar código arbitrario.
+### Fase 3 — Scripts y ejecución dinámica ✅ IMPLEMENTADA
+
+| Cambio | Archivos |
+|---|---|
+| Nueva frontera de confianza: todo script BeanShell de `RESOURCES` se compara con la plantilla versionada en `/com/openbravo/pos/templates/`. Si difiere, se descarta y se ejecuta la copia original; si no hay copia original, se rechaza salvo opt-in explícito `-Dunicenta.scripts.allowdb=true` | nuevo `scripting/ScriptSecurity.java`, `forms/JPrincipalApp.java`, `sales/JPanelTicket.java` |
+| `dbPassword` **ya no se entrega a los scripts** (antes se desencriptaba y se pasaba como variable a BeanShell). Se mantiene la variable con valor `<redacted>`; opt-in con `-Dscripting.exposeDbPassword=true` | `sales/JPanelTicket.java` |
+| Whitelist de nombres de bean: solo `com.openbravo.*`, `net.sf.jasperreports.*` y recursos `/com/openbravo/**.bs`, con rechazo de `..` y caracteres extraños, antes de `Class.forName()` | nuevo `forms/BeanNameValidator.java`, `forms/JRootApp.java` |
+| 10 tests nuevos (integridad de scripts, opt-in, nombres inválidos, traversal) | `test/.../ScriptSecurityTest.java`, `test/.../BeanNameValidatorTest.java` |
+
+**Criterio verificado:** `ant -f build.xml clean test` → **32/32 tests OK**.
+Modificar un script en `RESOURCES` ya no permite ejecutar código arbitrario: se detecta la diferencia y se
+usa la copia del JAR. Las plantillas Velocity de impresión siguen viniendo de la BD, pero no evalúan Java.
+
+**Nota operativa:** las personalizaciones legítimas de scripts/menu deben versionarse como plantillas en el
+JAR o habilitarse de forma explícita con `unicenta.scripts.allowdb=true` (se registra un aviso en el log).
 
 ### Fase 4 — Calidad y arquitectura
 - Extraer de `JPanelTicket` tres colaboradores: `TicketStateMachine`, `TicketPricingService`, `TicketPrintService`.
@@ -146,7 +154,7 @@ ant -f build.xml clean test
 ant -f build.xml dist
 ```
 
-Resultado: **22 tests OK** (16 de Fase 1 + 6 de Fase 2), JAR y ambos ZIP de distribución generados.
+Resultado: **32 tests OK** (16 de Fase 1 + 6 de Fase 2 + 10 de Fase 3), JAR y ambos ZIP de distribución generados.
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 

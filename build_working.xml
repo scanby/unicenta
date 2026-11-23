@@ -444,6 +444,8 @@
             </classpath>
             <arg value="com.openbravo.pos.util.PasswordHasherTest"/>
             <arg value="com.openbravo.pos.util.SecureEncrypterTest"/>
+            <arg value="com.openbravo.pos.scripting.ScriptSecurityTest"/>
+            <arg value="com.openbravo.pos.forms.BeanNameValidatorTest"/>
             <arg value="com.openbravo.data.loader.DataWriteUtilsTest"/>
             <arg value="com.openbravo.data.loader.NormalBuilderTest"/>
         </java>

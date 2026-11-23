@@ -470,8 +470,8 @@ public class JRootApp extends JPanel implements AppView {
         
         // For backwards compatibility
         beanfactory = mapNewClass(beanfactory);
-        
-        
+        BeanNameValidator.validate(beanfactory);
+
         BeanFactory bf = m_aBeanFactories.get(beanfactory);
         if (bf == null) {   
             
