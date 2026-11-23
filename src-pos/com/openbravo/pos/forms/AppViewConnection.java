@@ -23,12 +23,14 @@ import com.openbravo.basic.BasicException;
 import com.openbravo.data.loader.Session;
 import com.openbravo.pos.util.AltEncrypter;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Locale;
 
 /**
  *
@@ -54,7 +56,9 @@ public class AppViewConnection {
             if (isJavaWebStart()) {
                 Class.forName(props.getProperty("db.driver"), true, Thread.currentThread().getContextClassLoader());
             } else {
-                ClassLoader cloader = new URLClassLoader(new URL[] {new File(props.getProperty("db.driverlib")).toURI().toURL()});
+                String sDriverLib = props.getProperty("db.driverlib");
+                validateDriverLibrary(sDriverLib, props);
+                ClassLoader cloader = new URLClassLoader(new URL[] {new File(sDriverLib).toURI().toURL()});
                 DriverManager.registerDriver(new DriverWrapper((Driver) Class.forName(props.getProperty("db.driver"), true, cloader).newInstance()));
             }
 
@@ -73,6 +77,42 @@ public class AppViewConnection {
         } catch (SQLException eSQL) {
             throw new BasicException(AppLocal.getIntString("message.databaseconnectionerror"), eSQL);
         }   
+    }
+
+    /**
+     * Rejects driver libraries that are missing, are not JAR/ZIP files or live
+     * outside the application directory. Loading a class from an arbitrary path
+     * configured in unicentaopos.properties is equivalent to arbitrary code
+     * execution. Deployments with an approved system-wide driver directory can
+     * opt out explicitly with {@code db.driverlib.allowexternal=true}.
+     */
+    private static void validateDriverLibrary(String sDriverLib, AppProperties props)
+            throws BasicException {
+        if (sDriverLib == null || sDriverLib.trim().length() == 0) {
+            throw new BasicException("db.driverlib is not configured");
+        }
+        try {
+            File driver = new File(sDriverLib).getCanonicalFile();
+            if (!driver.isFile()) {
+                throw new BasicException("Database driver library does not exist: " + sDriverLib);
+            }
+            String name = driver.getName().toLowerCase(Locale.ENGLISH);
+            if (!name.endsWith(".jar") && !name.endsWith(".zip")) {
+                throw new BasicException("Database driver library must be a JAR or ZIP: " + sDriverLib);
+            }
+            if ("true".equalsIgnoreCase(props.getProperty("db.driverlib.allowexternal"))) {
+                return;
+            }
+            String dirname = System.getProperty("dirname.path");
+            File appDir = new File(dirname == null ? System.getProperty("user.dir") : dirname)
+                    .getCanonicalFile();
+            if (!driver.getPath().startsWith(appDir.getPath() + File.separator)) {
+                throw new BasicException("Database driver library is outside the application directory: "
+                        + sDriverLib + " (set db.driverlib.allowexternal=true to allow it explicitly)");
+            }
+        } catch (IOException e) {
+            throw new BasicException("Cannot resolve database driver library: " + sDriverLib, e);
+        }
     }
 
     private static boolean isJavaWebStart() {

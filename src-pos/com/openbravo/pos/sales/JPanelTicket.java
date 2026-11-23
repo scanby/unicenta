@@ -79,7 +79,9 @@ import net.sf.jasperreports.engine.xml.JRXmlLoader;
  * @author adrianromero
  */
 public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFactoryApp, TicketsEditor {
-   
+
+    private static final Logger logger = Logger.getLogger(JPanelTicket.class.getName());
+    
     // Variable numerica
     private final static int NUMBERZERO = 0;
     private final static int NUMBERVALID = 1;
@@ -1417,16 +1419,16 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
        
 // John L July 2014
 //    private void warrantyCheck(TicketInfo ticket){
-    private boolean warrantyCheck(TicketInfo ticket) {    
-        warrantyPrint=false;
-        int lines=0;
-        while (lines < ticket.getLinesCount()) {             
-            if (!warrantyPrint){
-                warrantyPrint = ticket.getLine(lines).isProductWarranty();
-                return (true);
+    private boolean warrantyCheck(TicketInfo ticket) {
+        // The old implementation returned on the first line, so warranty
+        // products in lines 2..n were never detected.
+        warrantyPrint = false;
+        for (int i = 0; i < ticket.getLinesCount(); i++) {
+            if (ticket.getLine(i).isProductWarranty()) {
+                warrantyPrint = true;
+                return true;
             }
-            lines++;
-            }
+        }
         return false;
     }
    
@@ -2508,7 +2510,9 @@ m_App.getAppUserView().showTask("com.openbravo.pos.customers.CustomersPanel");
            vProduct = dlSales.getProductInfoByCode("PowerSupplied");
            addTicketLine(vProduct, mooring.getVesselDays(), vProduct.getPriceSell());               
            }         
-           }catch (BasicException e){}
+           } catch (BasicException e) {
+                logger.log(Level.WARNING, "Cannot add mooring fee lines to ticket", e);
+            }
        }
        }
                refreshTicket(); 

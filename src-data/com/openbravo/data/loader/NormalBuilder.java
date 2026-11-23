@@ -117,7 +117,7 @@ public class NormalBuilder implements ISQLBuilderStatic {
             int iCount = 0;
             int iPos;
             int iLast = 0;
-            while ((iPos = m_sSentence.indexOf('?', iLast)) > 0) {
+            while ((iPos = m_sSentence.indexOf('?', iLast)) >= 0) {
                 sNewSentence.append(m_sSentence.substring(iLast, iPos));
                 if (iCount < m_aParams.size() && m_aParams.get(iCount) != null) {
                     // el valor que viene

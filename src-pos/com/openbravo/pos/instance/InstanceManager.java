@@ -40,7 +40,11 @@ public class InstanceManager {
      * @throws java.rmi.AlreadyBoundException */
     public InstanceManager(AppMessage message) throws RemoteException, AlreadyBoundException {
 
-        m_registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+        // Bind to 127.0.0.1 only: the "restore window" service must never be
+        // reachable from another machine on the network.
+        LoopbackSocketFactory socketFactory = new LoopbackSocketFactory();
+        m_registry = LocateRegistry.createRegistry(
+                Registry.REGISTRY_PORT, socketFactory, socketFactory);
 
         m_message = message;
 

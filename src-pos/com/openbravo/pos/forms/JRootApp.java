@@ -34,6 +34,7 @@ import com.openbravo.pos.printer.TicketPrinterException;
 import com.openbravo.pos.scale.DeviceScale;
 import com.openbravo.pos.scanpal2.DeviceScanner;
 import com.openbravo.pos.scanpal2.DeviceScannerFactory;
+import com.openbravo.pos.util.PasswordHasher;
 import java.awt.CardLayout;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
@@ -50,6 +51,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import javax.swing.*;
         
@@ -60,6 +63,8 @@ import javax.swing.*;
  * @author adrianromero
  */
 public class JRootApp extends JPanel implements AppView {
+
+    private static final Logger logger = Logger.getLogger("com.openbravo.pos.forms.JRootApp");
 
     private AppProperties m_props;
     private Session session;     
@@ -299,7 +304,10 @@ public class JRootApp extends JPanel implements AppView {
             try {    
             String newTextCode = new Scanner(new File(newText),"UTF-8").useDelimiter("\\A").next();
             jLabel1.setText(newTextCode);
-            }catch (Exception e) {}
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Cannot read custom start text from {0}",
+                        new Object[] {newText, e});
+            }
             
         jLabel1.setAlignmentX(0.5F);
         jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -608,6 +616,7 @@ public class JRootApp extends JPanel implements AppView {
             jScrollPane1.getViewport().setView(jPeople);
             
         } catch (BasicException ee) {
+            logger.log(Level.WARNING, "Cannot list visible users", ee);
         }
     }
     // La accion del selector
@@ -639,6 +648,7 @@ public class JRootApp extends JPanel implements AppView {
                         m_actionuser.getIcon());
                 if (sPassword != null) {
                     if (m_actionuser.authenticate(sPassword)) {
+                        upgradePasswordIfNeeded(m_actionuser, sPassword);
                         openAppView(m_actionuser);                
                     } else {
                         MessageInf msg = new MessageInf(MessageInf.SGN_WARNING, AppLocal.getIntString("message.BadPassword"));
@@ -646,6 +656,29 @@ public class JRootApp extends JPanel implements AppView {
                     }
                 }   
             }
+        }
+    }
+
+    /**
+     * Migrates a legacy password hash (unsalted SHA-1 or plain text) to PBKDF2
+     * right after a successful login. A failure is logged but never prevents
+     * the user from entering.
+     *
+     * @param user      the user that just authenticated
+     * @param sPassword the clear text password typed by the user
+     */
+    private void upgradePasswordIfNeeded(AppUser user, String sPassword) {
+        String sStored = user.getPassword();
+        if (!PasswordHasher.needsUpgrade(sStored)) {
+            return;
+        }
+        String sNewHash = PasswordHasher.hash(sPassword);
+        try {
+            m_dlSystem.execChangePassword(new Object[] {sNewHash, user.getId()});
+            user.setPassword(sNewHash);
+            logger.log(Level.INFO, "Upgraded password hash for user {0}", user.getId());
+        } catch (BasicException e) {
+            logger.log(Level.WARNING, "Cannot upgrade password hash for user " + user.getId(), e);
         }
     }
     
@@ -734,6 +767,7 @@ public class JRootApp extends JPanel implements AppView {
             try {
                 user = m_dlSystem.findPeopleByCard(inputtext.toString());
             } catch (BasicException e) {
+                logger.log(Level.WARNING, "Cannot find user by card", e);
             }
             
             if (user == null)  {

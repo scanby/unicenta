@@ -96,7 +96,11 @@ public class JRootFrame extends javax.swing.JFrame implements AppMessage {
      * @throws RemoteException
      */
     @Override
-    public void restoreWindow() throws RemoteException {
+    public boolean restoreWindow(String token) throws RemoteException {
+        if (token == null || token.length() == 0
+                || !com.openbravo.pos.instance.InstanceToken.get().equals(token)) {
+            return false;
+        }
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -106,6 +110,7 @@ public class JRootFrame extends javax.swing.JFrame implements AppMessage {
                 requestFocus();
             }
         });
+        return true;
     }
     
     /** This method is called from within the constructor to

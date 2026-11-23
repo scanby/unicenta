@@ -1,0 +1,24 @@
+# Build output
+/build/
+*.class
+*.jar~
+
+# Derby / HSQLDB local databases
+unicentaopos-database/
+unicentaopos-db/
+*.log
+derby.log
+
+# IDE metadata
+/nbproject/private/
+/nbbuild/
+/dist/
+/.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS files
+Thumbs.db
+.DS_Store

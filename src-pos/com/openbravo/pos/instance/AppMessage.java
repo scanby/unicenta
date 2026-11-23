@@ -29,8 +29,13 @@ import java.rmi.RemoteException;
 public interface AppMessage extends Remote {
     
     /**
+     * Restores the running window, but only for callers that know the local
+     * per-user token.
      *
+     * @param token secret read from the user's private token file
+     * @return true if the window was actually restored
      * @throws RemoteException
      */
-    public void restoreWindow() throws RemoteException;    
+    public boolean restoreWindow(String token) throws RemoteException;
+
 }

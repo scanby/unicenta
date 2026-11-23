@@ -21,6 +21,7 @@ package com.openbravo.pos.forms;
 
 import com.openbravo.format.Formats;
 import com.openbravo.pos.instance.InstanceQuery;
+import com.openbravo.pos.instance.InstanceToken;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Locale;
@@ -57,16 +58,17 @@ public class StartPOS {
      */
     public static boolean registerApp() {
                        
-        // vemos si existe alguna instancia        
-        InstanceQuery i = null;
+        // vemos si existe alguna instancia
         try {
-            i = new InstanceQuery();
-            i.getAppMessage().restoreWindow();
-            return false;
+            InstanceQuery i = new InstanceQuery();
+            // The token prevents other local processes (or a remote client)
+            // from restoring/stealing focus of the running POS window.
+            boolean restored = i.getAppMessage().restoreWindow(InstanceToken.get());
+            return !restored;
 // JG 6 May 2013 to Multicatch
         } catch (RemoteException | NotBoundException e) {
             return true;
-        }  
+        }
     }
     
     /**

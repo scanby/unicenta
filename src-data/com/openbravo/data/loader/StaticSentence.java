@@ -112,7 +112,8 @@ public class StaticSentence extends JDBCSentence {
 
             String sentence = m_sentence.getSQL(m_SerWrite, params);
             
-           logger.log(Level.INFO, "Executing static SQL: {0}", sentence);
+           // SQL can contain customer data: keep it out of the default log level.
+           logger.log(Level.FINE, "Executing static SQL: {0}", sentence);
 
             if (m_Stmt.execute(sentence)) {
                 return new JDBCDataResultSet(m_Stmt.getResultSet(), m_SerRead);

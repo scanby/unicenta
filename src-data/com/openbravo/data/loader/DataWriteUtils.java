@@ -129,14 +129,18 @@ public class DataWriteUtils {
      * @return
      */
     public static String getEscaped(String sValue) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(sValue.length() + 8);
         for (int i = 0; i < sValue.length(); i++) {
-            switch (sValue.charAt(i)) {
+            char c = sValue.charAt(i);
+            switch (c) {
+                case '\'':
+                    // SQL standard: a quote is escaped by doubling it. The old
+                    // backslash form (\') is invalid in Derby, PostgreSQL, Oracle
+                    // and in MySQL with NO_BACKSLASH_ESCAPES, and allowed SQL injection.
+                    sb.append("''");
+                    break;
                 case '\\':
                     sb.append("\\\\");
-                    break;
-                 case '\'':
-                    sb.append("\\'");
                     break;
                 case '\n':
                     sb.append("\\n");
@@ -144,8 +148,8 @@ public class DataWriteUtils {
                 case '\r':
                     sb.append("\\r");
                     break;
-                default: 
-                    sb.append(sValue.charAt(i));
+                default:
+                    sb.append(c);
                     break;
             }
         }

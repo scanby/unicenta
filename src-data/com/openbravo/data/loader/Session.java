@@ -22,6 +22,8 @@ package com.openbravo.data.loader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -30,6 +32,8 @@ import java.sql.SQLException;
  *
  */
 public final class Session {
+
+    private static final Logger logger = Logger.getLogger("com.openbravo.data.loader.Session");
     
     private final String m_surl;
     private final String m_sappuser;
@@ -92,7 +96,7 @@ public final class Session {
                 }            
                 m_c.close();
             } catch (SQLException e) {
-                // me la como
+                logger.log(Level.WARNING, "Error while closing the database connection", e);
             } finally {
                 m_c = null;
             }

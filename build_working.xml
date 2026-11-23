@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 
-<project name="unicentaopos" basedir="." default="dist">
+<project name="unicentaopos-build" basedir="." default="dist">
     <!-- ================================================================= -->
     <!-- P R O P E R T I E S                                               -->
     <!-- ================================================================= -->
@@ -9,8 +9,8 @@
     <!-- program name -->
     <property name="name" value="unicentaopos"/>
 
-    <!-- project version -->
-    <property name="version" value="3.71"/>
+    <!-- project version (keep in sync with AppLocal.APP_VERSION) -->
+    <property name="version" value="3.81"/>
 
     <!-- javac properties -->
     <property name="javac.deprecation" value="off"/>
@@ -26,6 +26,8 @@
     <property name="reports" value="${basedir}/reports"/>
     <property name="locales" value="${basedir}/locales"/>
     <property name="lib" value="${basedir}/lib"/>
+    <property name="src.test" value="${basedir}/test"/>
+    <property name="dest.test" value="${basedir}/build/test"/>
 
     <!-- the jar directory -->
     <property name="dest.jar" value="${basedir}/build/jar"/>
@@ -42,8 +44,16 @@
     <!-- ================================================================= -->
     <!-- I N I T                                                           -->
     <!-- ================================================================= -->
+    <target name="clean" description="Remove all generated files">
+        <delete dir="${basedir}/build" />
+    </target>
+
     <target name="init.classes">
         <delete dir="${dest.classes}" />
+    </target>
+
+    <target name="init.test">
+        <delete dir="${dest.test}" />
     </target>
 
     <target name="init.jar">
@@ -62,16 +72,28 @@
     <!-- C O M P I L E                                                     -->
     <!-- ================================================================= -->
 
-    <target name="compilebeans" depends="init.classes">
-        <mkdir dir="${dest.classes}/beans" />
-        <javac srcdir="${src.beans}"
-               destdir="${dest.classes}/beans"
+    <!-- All three source trees are compiled together. The old staged build
+         failed on a clean checkout because src-beans references classes from
+         src-pos (JEditorKeys -> JCustomerFinder, JEditorNumber -> AppConfig). -->
+    <target name="compile" depends="init.classes" description="Compile all modules">
+        <mkdir dir="${dest.classes}" />
+        <javac destdir="${dest.classes}"
                debug="${javac.debug}"
                deprecation="${javac.deprecation}"
                optimize="${javac.optimize}"
-               target="${javac.minVMVersion}">
+               source="${javac.minVMVersion}"
+               target="${javac.minVMVersion}"
+               encoding="UTF-8">
+            <src path="${src.beans}"/>
+            <src path="${src.data}"/>
+            <src path="${src.pos}"/>
+            <classpath>
+                <fileset dir="${lib}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
         </javac>
-        <copy todir="${dest.classes}/beans">
+        <copy todir="${dest.classes}">
             <fileset dir="${src.beans}">
                 <exclude name="**/*.java"/>
                 <exclude name="**/*.form"/>
@@ -79,22 +101,6 @@
                 <exclude name="**/Thumbs.db"/>
                 <exclude name="**/filesystem.attributes"/>
             </fileset>
-        </copy>                
-    </target>
-
-    <target name="compiledata" depends="init.classes,compilebeans">
-        <mkdir dir="${dest.classes}/data" />
-        <javac srcdir="${src.data}"
-               destdir="${dest.classes}/data"
-               debug="${javac.debug}"
-               deprecation="${javac.deprecation}"
-               optimize="${javac.optimize}"
-               target="${javac.minVMVersion}">
-            <classpath>
-                <pathelement location="${dest.classes}/beans"/>
-            </classpath>
-		</javac>
-        <copy todir="${dest.classes}/data">
             <fileset dir="${src.data}">
                 <exclude name="**/*.java"/>
                 <exclude name="**/*.form"/>
@@ -102,26 +108,6 @@
                 <exclude name="**/Thumbs.db"/>
                 <exclude name="**/filesystem.attributes"/>
             </fileset>
-        </copy>                
-    </target>
-
-    <target name="compilepos" depends="init.classes,compilebeans,compiledata">
-        <mkdir dir="${dest.classes}/pos" />
-        <javac srcdir="${src.pos}"
-               destdir="${dest.classes}/pos"
-               debug="${javac.debug}"
-               deprecation="${javac.deprecation}"
-               optimize="${javac.optimize}"
-               target="${javac.minVMVersion}">
-            <classpath>
-                  <fileset dir="${basedir}/lib">
-                    <include name="**/*.jar"/>
-                  </fileset>
-                <pathelement location="${dest.classes}/beans"/>
-                <pathelement location="${dest.classes}/data"/>
-            </classpath>
-        </javac>
-        <copy todir="${dest.classes}/pos">
             <fileset dir="${src.pos}">
                 <exclude name="**/*.java"/>
                 <exclude name="**/*.form"/>
@@ -129,8 +115,13 @@
                 <exclude name="**/Thumbs.db"/>
                 <exclude name="**/filesystem.attributes"/>
             </fileset>
-        </copy>                
+        </copy>
     </target>
+
+    <!-- Kept as aliases for scripts that call the old target names. -->
+    <target name="compilebeans" depends="compile"/>
+    <target name="compiledata" depends="compile"/>
+    <target name="compilepos" depends="compile"/>
 
     <!-- ================================================================= -->
     <!-- J A R                           				   -->
@@ -141,10 +132,8 @@
         <mkdir dir="${basedir}/build/zip" />
 
         <copy todir="${basedir}/build/zip">
-            <fileset dir="${dest.classes}/beans"/>
-            <fileset dir="${dest.classes}/data"/>
-            <fileset dir="${dest.classes}/pos"/>
-        </copy>  
+            <fileset dir="${dest.classes}"/>
+        </copy>
         <mkdir dir="${dest.jar}" />
         <jar jarfile="${dest.jar}/unicentaopos.jar"
              compress="true"
@@ -223,9 +212,10 @@
         <copy file="${basedir}/configure.bat" todir="${basedir}/build/zip"/>
         <copy file="${basedir}/start.sh" todir="${basedir}/build/zip"/>
         <copy file="${basedir}/configure.sh" todir="${basedir}/build/zip"/>
-        <copy file="${basedir}/unicentaopos_128.png" todir="${basedir}/build/zip"/>
+        <copy file="${basedir}/unicentaopos.png" todir="${basedir}/build/zip"/>
         <copy file="${basedir}/README" todir="${basedir}/build/zip"/>
-        <copy file="${basedir}/logging.properties" todir="${basedir}/build/zip"/>
+        <!-- logging.properties no longer ships with this release. -->
+        <copy file="${basedir}/logging.properties" todir="${basedir}/build/zip" failonerror="false"/>
         <copy file="${dest.jar}/unicentaopos.jar" todir="${basedir}/build/zip"/>
         <copy todir="${basedir}/build/zip/licensing">
             <fileset dir="${basedir}/licensing"/>
@@ -284,14 +274,16 @@
         <copy file="${basedir}/configure.bat" todir="${basedir}/build/zip"/>
         <copy file="${basedir}/start.sh" todir="${basedir}/build/zip"/>
         <copy file="${basedir}/configure.sh" todir="${basedir}/build/zip"/>
-        <copy file="${basedir}/unicentaopos_128.png" todir="${basedir}/build/zip"/>
+        <copy file="${basedir}/unicentaopos.png" todir="${basedir}/build/zip"/>
         <copy file="${basedir}/README" todir="${basedir}/build/zip"/>
-        <copy file="${basedir}/logging.properties" todir="${basedir}/build/zip"/>
+        <!-- logging.properties no longer ships with this release. -->
+        <copy file="${basedir}/logging.properties" todir="${basedir}/build/zip" failonerror="false"/>
         <copy file="${basedir}/build.xml" todir="${basedir}/build/zip" />
-        <copy file="${basedir}/.project" todir="${basedir}/build/zip" />
-        <copy file="${basedir}/.classpath" todir="${basedir}/build/zip" />
-        <copy file="${basedir}/Base diff.launch" todir="${basedir}/build/zip" />
-        <copy file="${basedir}/Head diff.launch" todir="${basedir}/build/zip" />
+        <!-- IDE metadata is optional: it is not present in this checkout. -->
+        <copy file="${basedir}/.project" todir="${basedir}/build/zip" failonerror="false" />
+        <copy file="${basedir}/.classpath" todir="${basedir}/build/zip" failonerror="false" />
+        <copy file="${basedir}/Base diff.launch" todir="${basedir}/build/zip" failonerror="false" />
+        <copy file="${basedir}/Head diff.launch" todir="${basedir}/build/zip" failonerror="false" />
 
         <!-- licensing -->
 
@@ -411,7 +403,7 @@
 	      todir="${dest.dist}/jws"/>
 	<copy file="${dest.jar}/reports.jar" 
 	      todir="${dest.dist}/jws"/>
-	<copy file="${basedir}/unicentaopos_128.png" 
+	<copy file="${basedir}/unicentaopos.png" 
 	      todir="${dest.dist}/jws"/>
 	<copy todir="${dest.dist}/jws/lib">
     	    <fileset dir="lib"/>
@@ -419,5 +411,44 @@
         <copy file="${basedir}/launch.jnlp" 
 	      todir="${dest.dist}/jws"/>
    </target>
+
+    <!-- ================================================================= -->
+    <!-- T E S T S                                                         -->
+    <!-- ================================================================= -->
+    <target name="compile.tests" depends="compilepos,init.test" description="Compile the JUnit test suite">
+        <mkdir dir="${dest.test}" />
+        <javac srcdir="${src.test}"
+               destdir="${dest.test}"
+               debug="on"
+               encoding="UTF-8"
+               source="${javac.minVMVersion}"
+               target="${javac.minVMVersion}">
+            <classpath>
+                <fileset dir="${lib}">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <pathelement location="${dest.classes}"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="test" depends="compile.tests" description="Run the JUnit test suite">
+        <!-- JUnitCore avoids the optional ant-junit.jar dependency. -->
+        <java classname="org.junit.runner.JUnitCore" fork="true" failonerror="yes" dir="${basedir}">
+            <classpath>
+                <fileset dir="${lib}">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <pathelement location="${dest.classes}"/>
+                <pathelement location="${dest.test}"/>
+            </classpath>
+            <arg value="com.openbravo.pos.util.PasswordHasherTest"/>
+            <arg value="com.openbravo.pos.util.SecureEncrypterTest"/>
+            <arg value="com.openbravo.data.loader.DataWriteUtilsTest"/>
+            <arg value="com.openbravo.data.loader.NormalBuilderTest"/>
+        </java>
+    </target>
+
+    <target name="test.run" depends="test" description="Alias of the test target"/>
 
 </project>

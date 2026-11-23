@@ -175,7 +175,8 @@ public class PreparedSentence extends JDBCSentence {
 
         try {
 
-            logger.log(Level.INFO, "Executing prepared SQL: {0}", m_sentence);
+            // SQL can contain customer data: keep it out of the default log level.
+            logger.log(Level.FINE, "Executing prepared SQL: {0}", m_sentence);
 
             m_Stmt = m_s.getConnection().prepareStatement(m_sentence);
  
