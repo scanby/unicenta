@@ -300,12 +300,51 @@
     <!-- I N S T A L L E R S                                               -->
     <!-- ================================================================= -->
 
-    <target name="installer" depends="installer.pos" 
-	description="Generate installers of POS for all predefined platforms">	
+    <!-- Inno Setup location; override with -Dinnosetup="C:\path\to\Inno Setup 6" -->
+    <property name="innosetup" value="C:\Users\CASA\AppData\Local\Programs\Inno Setup 6"/>
+
+    <!-- Free, reproducible Windows installer (replaces the old BitRock targets). -->
+    <target name="stage.installer" depends="init.installer.pos,jar"
+            description="Stage the files that the Windows installer will copy">
+        <mkdir dir="${dest.installer.pos}/stage"/>
+        <copy file="${basedir}/start.bat" todir="${dest.installer.pos}/stage"/>
+        <copy file="${basedir}/configure.bat" todir="${dest.installer.pos}/stage"/>
+        <copy file="${basedir}/start.sh" todir="${dest.installer.pos}/stage"/>
+        <copy file="${basedir}/configure.sh" todir="${dest.installer.pos}/stage"/>
+        <copy file="${basedir}/unicentaopos.png" todir="${dest.installer.pos}/stage"/>
+        <copy file="${basedir}/README" todir="${dest.installer.pos}/stage"/>
+        <copy file="${dest.jar}/unicentaopos.jar" todir="${dest.installer.pos}/stage"/>
+        <copy todir="${dest.installer.pos}/stage/licensing">
+            <fileset dir="${basedir}/licensing"/>
+        </copy>
+        <copy todir="${dest.installer.pos}/stage/lib">
+            <fileset dir="${lib}"/>
+        </copy>
+        <copy todir="${dest.installer.pos}/stage/locales">
+            <fileset dir="${locales}"/>
+        </copy>
+        <copy todir="${dest.installer.pos}/stage/reports">
+            <fileset dir="${reports}"/>
+        </copy>
+        <mkdir dir="${dest.dist}"/>
     </target>
 
+    <target name="installer.windows" depends="stage.installer"
+            description="Build the Windows setup executable with Inno Setup">
+        <exec executable="${innosetup}/ISCC.exe" failonerror="true">
+            <arg value="${basedir}/installer/unicentaopos.iss"/>
+        </exec>
+    </target>
+
+    <target name="installer" depends="installer.windows"
+            description="Generate the release installer">
+    </target>
+
+    <target name="release" depends="clean,test,dist,installer.windows"
+            description="Full release: verified build, ZIPs and Windows installer"/>
+
     <!-- ================================================================= -->
-    <!-- I N S T A L L E R S   P O S                                       -->
+    <!-- I N S T A L L E R S   P O S  (legacy BitRock targets)              -->
     <!-- ================================================================= -->
 
     <target name="installer.pos" depends="installer.pos.linux, installer.pos.linux-x64, installer.pos.linux-ia64, installer.pos.windows, installer.pos.osx"

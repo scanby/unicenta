@@ -416,6 +416,12 @@ NetBeans imposibles de testear.
 - `start.bat/sh` y `configure.bat/sh`: classpath con ~25 JARs (`lib/`), `locales/`, `reports/` →
   `StartPOS` / `JFrmConfig`; `start.sh` detecta el SO. `migrate.sh` está corrupto (todo en una línea
   y `$DIRNAME/libjasperreports...` sin `/`). `ResetSeq.bat` → `JResetPickupID`.
+- **Instalador Windows:** los targets BitRock originales (`installer.pos.*`) requieren un `builder`
+  propietario y un `installer/installer.xml` que no está en el repo, por lo que no generaban nada.
+  Se añadió `installer/unicentaopos.iss` (Inno Setup 6, gratuito) y los targets `stage.installer`,
+  `installer.windows` y `release`. El instalador se instala sin elevación (`PrivilegesRequired=lowest`,
+  directorio por defecto `%LOCALAPPDATA%\uniCenta oPOS`), crea accesos directos y desinstalador, y
+  fue verificado con `/VERYSILENT` (827 archivos, incluidos los 517 `.properties` de locales).
 - Documentación: `README` (guía de arranque v3.81), `README.md` (changelog; v3.90 sin fuente),
   `README_First.txt`, `README_Locales.txt`, `LICENSE.md` (GPL v3), `docs/` (6 PDFs + esquema HTML) y
   22 `Release Notes/RN_*.txt` de 2.40 a 4.00 (RN_400 fechado antes que RN_381: inconsistencia).
