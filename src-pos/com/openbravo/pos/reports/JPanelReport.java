@@ -29,7 +29,6 @@ import com.openbravo.pos.forms.*;
 import com.openbravo.pos.sales.TaxesLogic;
 import com.openbravo.pos.util.JRViewer300;
 import java.awt.BorderLayout;
-import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +36,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import net.sf.jasperreports.engine.*;
 
 /**
@@ -94,13 +94,37 @@ public abstract class JPanelReport extends JPanel implements JPanelView, BeanFac
         
         add(reportviewer, BorderLayout.CENTER);
         
-        try {
-            jr = JasperReportLoader.load(getClass(), getReport());
-        } catch (JRException | IOException | ClassNotFoundException e) {
-            MessageInf msg = new MessageInf(MessageInf.SGN_WARNING, AppLocal.getIntString("message.cannotloadreport"), e);
-            msg.show(this);
-            jr = null;
-        }  
+        loadReportAsync();
+    }
+
+    /**
+     * Compiling a Jasper report can take seconds; do it off the event dispatch
+     * thread and keep the execute button disabled until it is ready.
+     */
+    private void loadReportAsync() {
+        final Class<?> context = getClass();
+        final String report = getReport();
+        jButton1.setEnabled(false);
+        new SwingWorker<JasperReport, Void>() {
+            @Override
+            protected JasperReport doInBackground() throws Exception {
+                return JasperReportLoader.load(context, report);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    jr = get();
+                } catch (Exception e) {
+                    jr = null;
+                    MessageInf msg = new MessageInf(MessageInf.SGN_WARNING,
+                            AppLocal.getIntString("message.cannotloadreport"), e);
+                    msg.show(JPanelReport.this);
+                } finally {
+                    jButton1.setEnabled(jr != null);
+                }
+            }
+        }.execute();
     }
     
     /**

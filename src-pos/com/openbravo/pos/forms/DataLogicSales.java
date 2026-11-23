@@ -453,7 +453,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getPromoTypeList() {
-            return new StaticSentence(s
+            return new PreparedSentence(s
                 , "SELECT ID, "
                     + "DESCRIPTION "
                     + "FROM PROMO_TYPE "
@@ -468,7 +468,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getCatName(String id) {
-            return new StaticSentence(s
+            return new PreparedSentence(s
                 , "SELECT "
                     + "ID "
                     + "FROM CATEGORIES WHERE ID = ?"
@@ -722,7 +722,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
         public final SentenceList getUserList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME "
@@ -744,7 +744,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
         public final SentenceList getTaxList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME, "
@@ -778,7 +778,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
         public final SentenceList getCategoriesList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME, "
@@ -796,7 +796,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getTaxCustCategoriesList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME "
@@ -840,7 +840,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getTaxCategoriesList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME "
@@ -858,7 +858,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getAttributeSetList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME "
@@ -876,7 +876,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getLocationsList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT "
                 + "ID, "
                 + "NAME, "
@@ -891,7 +891,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      * @return
      */
     public final SentenceList getFloorsList() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
             , "SELECT ID, NAME FROM FLOORS ORDER BY NAME"
             , null
             , new SerializerReadClass(FloorsInfo.class));
@@ -1261,19 +1261,19 @@ public Object transact() throws BasicException {
                 }
 
                 // and delete the receipt
-                new StaticSentence(s
+                new PreparedSentence(s
                     , "DELETE FROM TAXLINES WHERE RECEIPT = ?"
                     , SerializerWriteString.INSTANCE).exec(ticket.getId());
-                new StaticSentence(s
+                new PreparedSentence(s
                     , "DELETE FROM PAYMENTS WHERE RECEIPT = ?"
                     , SerializerWriteString.INSTANCE).exec(ticket.getId());
-                new StaticSentence(s
+                new PreparedSentence(s
                     , "DELETE FROM TICKETLINES WHERE TICKET = ?"
                     , SerializerWriteString.INSTANCE).exec(ticket.getId());
-                new StaticSentence(s
+                new PreparedSentence(s
                     , "DELETE FROM TICKETS WHERE ID = ?"
                     , SerializerWriteString.INSTANCE).exec(ticket.getId());
-                new StaticSentence(s
+                new PreparedSentence(s
                     , "DELETE FROM RECEIPTS WHERE ID = ?"
                     , SerializerWriteString.INSTANCE).exec(ticket.getId());
                 return null;
@@ -1606,7 +1606,7 @@ public Object transact() throws BasicException {
      * @return
      */
     public final SentenceExec getCatalogCategoryAdd() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
                 , "INSERT INTO PRODUCTS_CAT(PRODUCT, CATORDER) SELECT ID, " + s.DB.INTEGER_NULL() + " FROM PRODUCTS WHERE CATEGORY = ?"
                 , SerializerWriteString.INSTANCE);
     }
@@ -1616,7 +1616,7 @@ public Object transact() throws BasicException {
      * @return
      */
     public final SentenceExec getCatalogCategoryDel() {
-        return new StaticSentence(s
+        return new PreparedSentence(s
                 , "DELETE FROM PRODUCTS_CAT WHERE PRODUCT = ANY (SELECT ID FROM PRODUCTS WHERE CATEGORY = ?)"
                 , SerializerWriteString.INSTANCE);
     }

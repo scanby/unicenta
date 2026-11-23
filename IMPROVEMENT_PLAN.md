@@ -126,11 +126,25 @@ JAR o habilitarse de forma explícita con `unicenta.scripts.allowdb=true` (se re
 **Verificación:** `ant -f build.xml clean test` → **38/38 tests OK**.
 **Criterio final (aún no alcanzado):** ninguna clase > 800 líneas; cobertura > 60 % en `util` y `loader`; build reproducible.
 
-### Fase 5 — Datos
-- Sustituir `NormalBuilder`/`QBFBuilder` por `PreparedSentence` en todos los DAO y reportes.
-- Añadir `CHECK`/`FK` y `NOT NULL` al esquema; pool de conexiones (HikariCP).
-- Estrategia de migración versionada tipo Flyway en lugar de 100 scripts `*-upgrade-*.sql` manuales.
-- **Criterio:** 0 concatenaciones de valores literales en SQL; migraciones automatizadas y probadas.
+### Fase 5 — Datos 🔶 EN CURSO
+
+**Implementado:**
+- 28 sentencias `StaticSentence` convertidas a `PreparedSentence` (11 en `DataLogicSystem`, 17 en
+  `DataLogicSales`): cambio de clave, caja activa, inserción de tickets, movimientos y CSV pasan ahora
+  por `PreparedStatement` con parámetros enlazados. Se conservan las 5 sentencias que usan
+  `QBFBuilder` (requieren `ISQLBuilderStatic`) y el `m_dummy` sin parámetros.
+- Compilación y 38 tests verificados tras la migración.
+
+**Pendiente en Fase 5:**
+- Reescribir `QBFBuilder`/`NormalBuilder` para generar SQL con `?` y alimentar `PreparedSentence`
+  (es el último camino de interpolación de literales; afecta a todos los buscadores y reportes).
+- Sustituir el SQL concatenado de `RestaurantDBUtils`, `JMooringDetails`, `PromoEditor`,
+  `KitchenDisplay`, `JProductAttEdit` y `ProductsEditor.setCurrentStock()`.
+- Añadir `CHECK`/`FK`/`NOT NULL` a los 5 esquemas y un pool de conexiones.
+- Migración versionada tipo Flyway en lugar de los ~100 scripts `*-upgrade-*.sql` manuales.
+
+**Criterio final (aún no alcanzado):** 0 concatenaciones de valores literales en SQL; migraciones
+automatizadas y probadas contra los 5 motores.
 
 ---
 

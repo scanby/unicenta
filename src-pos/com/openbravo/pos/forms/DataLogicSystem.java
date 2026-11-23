@@ -186,7 +186,7 @@ public class DataLogicSystem extends BeanFactoryDataSingle {
        
         
         
-        m_peoplevisible = new StaticSentence(s
+        m_peoplevisible = new PreparedSentence(s
             , "SELECT ID, NAME, APPPASSWORD, CARD, ROLE, IMAGE FROM PEOPLE WHERE VISIBLE = " + s.DB.TRUE() + " ORDER BY NAME"
             , null
             , peopleread);
@@ -214,16 +214,16 @@ public class DataLogicSystem extends BeanFactoryDataSingle {
             , SerializerWriteString.INSTANCE
             , SerializerReadBytes.INSTANCE);     
         
-        m_changepassword = new StaticSentence(s
+        m_changepassword = new PreparedSentence(s
                 , "UPDATE PEOPLE SET APPPASSWORD = ? WHERE ID = ?"
                 ,new SerializerWriteBasic(new Datas[] {Datas.STRING, Datas.STRING}));
 
-        m_sequencecash = new StaticSentence(s,
+        m_sequencecash = new PreparedSentence(s,
                 "SELECT MAX(HOSTSEQUENCE) FROM CLOSEDCASH WHERE HOST = ?",
                 SerializerWriteString.INSTANCE,
                 SerializerReadInteger.INSTANCE);
         
-        m_activecash = new StaticSentence(s
+        m_activecash = new PreparedSentence(s
             , "SELECT HOST, HOSTSEQUENCE, DATESTART, DATEEND, NOSALES FROM CLOSEDCASH WHERE MONEY = ?"
             , SerializerWriteString.INSTANCE
             , new SerializerReadBasic(new Datas[] {
@@ -233,7 +233,7 @@ public class DataLogicSystem extends BeanFactoryDataSingle {
                 Datas.TIMESTAMP,
                 Datas.INT}));            
         
-        m_insertcash = new StaticSentence(s
+        m_insertcash = new PreparedSentence(s
                 , "INSERT INTO CLOSEDCASH(MONEY, HOST, HOSTSEQUENCE, DATESTART, DATEEND) " +
                   "VALUES (?, ?, ?, ?, ?)"
                 , new SerializerWriteBasic(new Datas[] {
@@ -243,32 +243,32 @@ public class DataLogicSystem extends BeanFactoryDataSingle {
                     Datas.TIMESTAMP, 
                     Datas.TIMESTAMP}));
 
-        m_draweropened = new StaticSentence(s
+        m_draweropened = new PreparedSentence(s
                 , "INSERT INTO DRAWEROPENED ( NAME, TICKETID) " +
                   "VALUES (?, ?)"
                 , new SerializerWriteBasic(new Datas[] {
                     Datas.STRING, 
                     Datas.STRING}));       
         
-        m_lineremoved = new StaticSentence(s,
+        m_lineremoved = new PreparedSentence(s,
                 "INSERT INTO LINEREMOVED (NAME, TICKETID, PRODUCTID, PRODUCTNAME, UNITS) " +
                 "VALUES (?, ?, ?, ?, ?)",
                 new SerializerWriteBasic(new Datas[] {Datas.STRING, Datas.STRING, Datas.STRING, Datas.STRING, Datas.DOUBLE}));
         
-        m_locationfind = new StaticSentence(s
+        m_locationfind = new PreparedSentence(s
                 , "SELECT NAME FROM LOCATIONS WHERE ID = ?"
                 , SerializerWriteString.INSTANCE
                 , SerializerReadString.INSTANCE);   
         
 //Add 13.2.14 JDL for new gui based permissions                
-        m_permissionlist = new StaticSentence(s
+        m_permissionlist = new PreparedSentence(s
                 , "SELECT PERMISSIONS FROM PERMISSIONS WHERE ID = ?"
                 , SerializerWriteString.INSTANCE
                 , new SerializerReadBasic(new Datas[] {
                     Datas.STRING
                 }));         
          
-        m_updatepermissions = new StaticSentence(s
+        m_updatepermissions = new PreparedSentence(s
                 , "INSERT INTO PERMISSIONS (ID, PERMISSIONS) " +
                   "VALUES (?, ?)"
                 , new SerializerWriteBasic(new Datas[] {
@@ -277,7 +277,7 @@ public class DataLogicSystem extends BeanFactoryDataSingle {
         
         
 // added 1.3.14.14 JDL new routine to write to CSV table, to clean up CSV import routine        
-        m_insertCSVEntry = new StaticSentence(s
+        m_insertCSVEntry = new PreparedSentence(s
                 , "INSERT INTO CSVIMPORT (ID, ROWNUMBER, CSVERROR, REFERENCE, CODE, NAME, PRICEBUY, PRICESELL, PREVIOUSBUY, PREVIOUSSELL,CATEGORY) " +
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 , new SerializerWriteBasic(new Datas[] {
@@ -646,3 +646,4 @@ public class DataLogicSystem extends BeanFactoryDataSingle {
    
    
 }
+

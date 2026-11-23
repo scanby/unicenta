@@ -44,6 +44,7 @@ import com.openbravo.pos.scripting.ScriptEngine;
 import com.openbravo.pos.scripting.ScriptException;
 import com.openbravo.pos.scripting.ScriptFactory;
 import com.openbravo.pos.scripting.ScriptSecurity;
+import com.openbravo.pos.reports.JasperReportLoader;
 import com.openbravo.pos.ticket.ProductInfoExt;
 import com.openbravo.pos.ticket.TaxInfo;
 import com.openbravo.pos.ticket.TicketInfo;
@@ -1493,19 +1494,8 @@ if (pickupSize!=null && (Integer.parseInt(pickupSize) >= tmpPickupId.length())){
         
         try {     
          
-            JasperReport jr;
-           
-            InputStream in = getClass().getResourceAsStream(resourcefile + ".ser");
-            if (in == null) {      
-                // read and compile the report
-                JasperDesign jd = JRXmlLoader.load(getClass().getResourceAsStream(resourcefile + ".jrxml"));            
-                jr = JasperCompileManager.compileReport(jd);    
-            } else {
-                try (ObjectInputStream oin = new ObjectInputStream(in)) {
-                    jr = (JasperReport) oin.readObject();
-                }
-                }
-           
+            JasperReport jr = JasperReportLoader.load(getClass(), resourcefile);
+            
             // Construyo el mapa de los parametros.
             Map reportparams = new HashMap();
             // reportparams.put("ARG", params);
