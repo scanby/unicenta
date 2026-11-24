@@ -37,6 +37,8 @@ import com.openbravo.pos.forms.DataLogicSales;
 import com.openbravo.pos.sales.TaxesLogic;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.util.Date;
@@ -60,6 +62,8 @@ import java.util.List;
  */
 public final class ProductsEditor extends JPanel implements EditorRecord {
 
+    private static final Logger logger = Logger.getLogger("com.openbravo.pos.inventory.ProductsEditor");
+
     private final SentenceList m_sentcat;
     private ComboBoxValModel m_CategoryModel;
 
@@ -78,6 +82,9 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
     private Object pricesell;
     private boolean priceselllock = false;
 
+    private final DataLogicSales m_dlSales;
+    private final JPanelPriceBreaks m_jPriceBreaks = new JPanelPriceBreaks();
+
     private boolean reportlock = false;
 
 // JG Mar 14 - Preparing for direct Printer assign rather than script
@@ -90,6 +97,8 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
      * @param dirty */
     public ProductsEditor(DataLogicSales dlSales, DirtyManager dirty) {
         initComponents();
+        m_dlSales = dlSales;
+        jTabbedPane1.addTab("Precios por cantidad", m_jPriceBreaks);
 
         // Taxes sentence
         taxsent = dlSales.getTaxList();
@@ -195,6 +204,7 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
 
         m_jTitle.setText(AppLocal.getIntString("label.recordeof"));
         m_id = null;
+        m_jPriceBreaks.clear();
         m_jRef.setText(null);
         m_jCode.setText(null);
         m_jName.setText(null);
@@ -288,6 +298,7 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
 
         m_jTitle.setText(AppLocal.getIntString("label.recordnew"));
         m_id = UUID.randomUUID().toString();
+        m_jPriceBreaks.clear();
         m_jRef.setText(null);
         m_jCode.setText(null);
         m_jName.setText(null);
@@ -380,6 +391,7 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
         Object[] myprod = (Object[]) value;
         m_jTitle.setText(Formats.STRING.formatValue(myprod[1]) + " - " + Formats.STRING.formatValue(myprod[3]) + " " + AppLocal.getIntString("label.recorddeleted"));
         m_id = myprod[0];
+        m_jPriceBreaks.clear();
         m_jRef.setText(Formats.STRING.formatValue(myprod[1]));
         m_jCode.setText(Formats.STRING.formatValue(myprod[2]));
         m_jName.setText(Formats.STRING.formatValue(myprod[3]));
@@ -471,6 +483,12 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
         Object[] myprod = (Object[]) value;
         m_jTitle.setText(Formats.STRING.formatValue(myprod[1]) + " - " + Formats.STRING.formatValue(myprod[3]));
         m_id = myprod[0];
+        try {
+            m_jPriceBreaks.setBreaks(m_dlSales.getPriceBreaks((String) m_id));
+        } catch (BasicException e) {
+            m_jPriceBreaks.clear();
+            logger.log(Level.WARNING, "Cannot load quantity price tiers for product " + m_id, e);
+        }
         m_jRef.setText(Formats.STRING.formatValue(myprod[1]));
         m_jCode.setText(Formats.STRING.formatValue(myprod[2]));
         m_jName.setText(Formats.STRING.formatValue(myprod[3]));
@@ -601,7 +619,16 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
        myprod[23] = m_jCheckWarrantyReceipt.isSelected();   
 
 // JG July 2014
-        myprod[24] = Formats.DOUBLE.parseValue(m_jStockUnits.getText());       
+        myprod[24] = Formats.DOUBLE.parseValue(m_jStockUnits.getText());
+
+        // Quantity price tiers are stored in their own table. Saving them here
+        // keeps the editor workflow unchanged for both insert and update.
+        try {
+            m_dlSales.setPriceBreaks((String) m_id,
+                    m_jPriceBreaks.isActive() ? m_jPriceBreaks.getBreaks() : null).exec(null);
+        } catch (BasicException e) {
+            logger.log(Level.WARNING, "Cannot save quantity price tiers for product " + m_id, e);
+        }
 
         return myprod;        
     

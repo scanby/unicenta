@@ -194,6 +194,10 @@ silent-install opcional) + hilo daemon en `StartPOS`. Por defecto desactivado, s
 **Idioma por defecto (español):** bundles `*_es` instalados en `locales/` y `reports/`, defaults `es_ES`
 en `AppConfig` y migración única de configuraciones antiguas desde `StartPOS` (`locale.migration`).
 4 tests nuevos (47 en total). Verificado: el config migró de `es_CO` a `es_ES` en el arranque.
+
+**Precios por cantidad (v3.82):** tabla `PRODUCTS_PRICEBREAKS` en los 5 motores + upgrade 3.81→3.82,
+pestaña de tramos en `ProductsEditor`, `DataLogicSales.get/setPriceBreaks`, `ProductPricing` aplicado al
+añadir líneas y al cambiar cantidades. 6 tests nuevos (53 en total) + DDL validado en Derby.
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 

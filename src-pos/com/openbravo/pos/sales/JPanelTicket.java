@@ -45,6 +45,7 @@ import com.openbravo.pos.scripting.ScriptException;
 import com.openbravo.pos.scripting.ScriptFactory;
 import com.openbravo.pos.scripting.ScriptSecurity;
 import com.openbravo.pos.reports.JasperReportLoader;
+import com.openbravo.pos.ticket.PriceBreakInfo;
 import com.openbravo.pos.ticket.ProductInfoExt;
 import com.openbravo.pos.ticket.TaxInfo;
 import com.openbravo.pos.ticket.TicketInfo;
@@ -609,7 +610,14 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
         }
    }
 
-    private void addTicketLine(ProductInfoExt oProduct, double dMul, double dPrice) {           
+    private void addTicketLine(ProductInfoExt oProduct, double dMul, double dPrice) {
+        // Quantity price tiers: choose the best configured price for this amount of units.
+        try {
+            List<PriceBreakInfo> breaks = dlSales.getPriceBreaks(oProduct.getID());
+            dPrice = ProductPricing.getUnitPrice(dPrice, dMul, breaks);
+        } catch (BasicException e) {
+            logger.log(Level.FINE, "Cannot read quantity price tiers for " + oProduct.getID(), e);
+        }
 // Added JDL 19.12.12 Variable Price Product    
 // take the number entered and convert to an amount rather than quantity. 
 // modified 02.05.13 read tax selected from the panel

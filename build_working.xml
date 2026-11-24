@@ -10,7 +10,7 @@
     <property name="name" value="unicentaopos"/>
 
     <!-- project version (keep in sync with AppLocal.APP_VERSION) -->
-    <property name="version" value="3.81"/>
+    <property name="version" value="3.82"/>
 
     <!-- javac properties -->
     <property name="javac.deprecation" value="off"/>
@@ -491,6 +491,7 @@
             <arg value="com.openbravo.pos.reports.JasperReportLoaderTest"/>
             <arg value="com.openbravo.pos.updates.UpdateServiceTest"/>
             <arg value="com.openbravo.pos.forms.SpanishLocaleTest"/>
+            <arg value="com.openbravo.pos.sales.ProductPricingTest"/>
             <arg value="com.openbravo.data.loader.DataWriteUtilsTest"/>
             <arg value="com.openbravo.data.loader.NormalBuilderTest"/>
         </java>

@@ -10,6 +10,7 @@
 
 | Concepto | Dato |
 |---|---|
+| Versión | **3.82** (añade precios por cantidad; la 3.81 introdujo seguridad y actualizaciones silenciosas) |
 | Naturaleza | TPV/POS de código abierto para pantalla táctil, descendiente directo de Openbravo POS 1.x |
 | Licencia | GPL v3 (`LICENSE.md`); algunas clases Jasper adaptadas son LGPL |
 | Lenguaje | Java 7 (target `1.7`), Swing, JDBC, BeanShell, Velocity, JasperReports, JavaPOS/ESC-POS, RMI, RXTX |
@@ -284,7 +285,21 @@ carga `.ser` o compila `.jrxml`, y ahora se ejecuta en un `SwingWorker`. `JRData
   todos los resultados se registran en `java.util.logging`. Por seguridad, `update.enabled=false`
   por defecto y la URL solo acepta HTTPS.
 
-### 7.8 Periféricos, presencia y mantenimiento
+### 7.8 Precios por cantidad (tramos de descuento)
+- Nueva tabla `PRODUCTS_PRICEBREAKS(ID, PRODUCT, MINQUANTITY, PRICESELL)` en los 5 motores, creada
+  por los `*-create.sql` y por los `*-upgrade-3.81.sql` (versión 3.82). Sin FK para permitir guardar
+  los tramos antes de que exista la fila de producto en altas.
+- `ProductsEditor` añade la pestaña **"Precios por cantidad"** (`JPanelPriceBreaks`): check de
+  activación, tabla de tramos "cantidad desde → precio", alta/baja de líneas. Se carga en
+  `writeValueEdit` y se persiste en `createValue()` mediante `DataLogicSales.setPriceBreaks()`
+  (transacción DELETE + INSERT).
+- `ProductPricing.getUnitPrice(base, unidades, tramos)` aplica el **precio más bajo** entre los
+  tramos cuya cantidad mínima esté cubierta; el precio base actúa como techo (un tramo nunca encarece).
+- Se aplica al crear líneas en `JPanelTicket.addTicketLine(...)` y al cambiar la cantidad en
+  `JProductLineEdit` (con guardia anti-bucle al sincronizar los editores de precio).
+- 6 tests JUnit (`ProductPricingTest`) + validación del DDL en Derby.
+
+### 7.9 Periféricos, presencia y mantenimiento
 
 - Básculas: Casio PD1, Samsung ESP, serie genérica, diálogo y falsa (`DeviceScale` según `machine.scale`).
 - Escáner ScanPal2: protocolo serie READ/CIPHER/ACK/OVER para descargar conteos y subir catálogo.

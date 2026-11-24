@@ -2,7 +2,7 @@
 ; Generated payload: build/installer/stage (Ant target: installer.windows)
 
 #define MyAppName "uniCenta oPOS"
-#define MyAppVersion "3.81"
+#define MyAppVersion "3.82"
 #define MyAppPublisher "uniCenta / scanby build"
 #define MyAppURL "https://github.com/scanby/unicenta"
 #define StageDir "..\build\installerpos\stage"

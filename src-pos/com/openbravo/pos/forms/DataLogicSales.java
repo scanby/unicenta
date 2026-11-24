@@ -21,6 +21,7 @@ package com.openbravo.pos.forms;
 
 import com.openbravo.basic.BasicException;
 import com.openbravo.data.loader.*;
+import com.openbravo.pos.ticket.PriceBreakInfo;
 import com.openbravo.data.model.Field;
 import com.openbravo.data.model.Row;
 import com.openbravo.format.Formats;
@@ -158,6 +159,41 @@ public class DataLogicSales extends BeanFactoryDataSingle {
      */
     public final Row getProductsRow() {
         return productsRow;
+    }
+
+    /**
+     * Quantity-based selling prices configured for a product, ordered by
+     * minimum quantity.
+     */
+    public final List<PriceBreakInfo> getPriceBreaks(String productId) throws BasicException {
+        return new PreparedSentence(s,
+                "SELECT ID, PRODUCT, MINQUANTITY, PRICESELL FROM PRODUCTS_PRICEBREAKS "
+                + "WHERE PRODUCT = ? ORDER BY MINQUANTITY",
+                SerializerWriteString.INSTANCE,
+                PriceBreakInfo.getSerializerRead()).list(productId);
+    }
+
+    /** Replaces all the quantity price tiers of a product. */
+    public final SentenceExec setPriceBreaks(final String productId, final List<PriceBreakInfo> breaks) {
+        return new SentenceExecTransaction(s) {
+            @Override
+            public int execInTransaction(Object params) throws BasicException {
+                new PreparedSentence(s,
+                        "DELETE FROM PRODUCTS_PRICEBREAKS WHERE PRODUCT = ?",
+                        SerializerWriteString.INSTANCE).exec(productId);
+                if (breaks != null) {
+                    for (PriceBreakInfo b : breaks) {
+                        new PreparedSentence(s,
+                                "INSERT INTO PRODUCTS_PRICEBREAKS (ID, PRODUCT, MINQUANTITY, PRICESELL) "
+                                + "VALUES (?, ?, ?, ?)",
+                                new SerializerWriteBasic(PriceBreakInfo.FIELDS))
+                                .exec(new Object[] {UUID.randomUUID().toString(), productId,
+                                     b.getMinQuantity(), b.getPriceSell()});
+                    }
+                }
+                return 1;
+            }
+        };
     }
 
 // Utilidades de productos

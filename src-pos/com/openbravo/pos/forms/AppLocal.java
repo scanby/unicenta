@@ -40,7 +40,7 @@ public class AppLocal {
     /**
      *
      */
-    public static final String APP_VERSION = "3.81";
+    public static final String APP_VERSION = "3.82";
 
     private static final LocaleResources m_resources;
     

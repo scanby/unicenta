@@ -29,18 +29,29 @@ import java.beans.PropertyChangeListener;
 import javax.swing.JFrame;
 import com.openbravo.pos.forms.AppLocal;
 import com.openbravo.pos.forms.AppView;
+import com.openbravo.pos.forms.DataLogicSales;
+import com.openbravo.pos.ticket.PriceBreakInfo;
+import com.openbravo.pos.ticket.ProductInfoExt;
 import com.openbravo.pos.ticket.TicketLineInfo;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author adrianromero
  */
 public class JProductLineEdit extends javax.swing.JDialog {
-    
+
+    private static final Logger logger = Logger.getLogger("com.openbravo.pos.sales.JProductLineEdit");
+
     private TicketLineInfo returnLine;
     private TicketLineInfo m_oLine;
     private boolean m_bunitsok;
     private boolean m_bpriceok;
+    private boolean m_bsettingprice;
+    private DataLogicSales m_dlSales;
+    private double m_dBasePrice;
             
     /** Creates new form JProductLineEdit */
     private JProductLineEdit(java.awt.Frame parent, boolean modal) {
@@ -62,6 +73,17 @@ public class JProductLineEdit extends javax.swing.JDialog {
         m_oLine = new TicketLineInfo(oLine);
         m_bunitsok = true;
         m_bpriceok = true;
+        m_bsettingprice = false;
+        m_dBasePrice = oLine.getPrice();
+        try {
+            m_dlSales = (DataLogicSales) app.getBean("com.openbravo.pos.forms.DataLogicSales");
+            ProductInfoExt product = m_dlSales.getProductInfo(oLine.getProductID());
+            if (product != null) {
+                m_dBasePrice = product.getPriceSell();
+            }
+        } catch (Exception e) {
+            logger.log(Level.FINE, "Cannot load base price for quantity tiers", e);
+        }
 
 //  JG 7 May 14 Allow User edit of Product.Name if has EditLine permissions
 //        m_jName.setEnabled(m_oLine.getProductID() == null && app.getAppUserView().getUser().hasPermission("com.openbravo.pos.sales.JPanelTicketEdits"));
@@ -122,16 +144,39 @@ public class JProductLineEdit extends javax.swing.JDialog {
                 m_bunitsok = false;
             } else {
                 m_oLine.setMultiply(value);
-                m_bunitsok = true;                
+                m_bunitsok = true;
+                applyQuantityPrice(value);
             }
 
             printTotals();
         }
     }
     
+    /** Recalculates the unit price from the quantity price tiers of the product. */
+    private void applyQuantityPrice(double units) {
+        if (m_dlSales == null || m_oLine.getProductID() == null) {
+            return;
+        }
+        try {
+            List<PriceBreakInfo> breaks = m_dlSales.getPriceBreaks(m_oLine.getProductID());
+            double price = ProductPricing.getUnitPrice(m_dBasePrice, units, breaks);
+            m_bsettingprice = true;
+            m_oLine.setPrice(price);
+            m_jPrice.setDoubleValue(price);
+            m_jPriceTax.setDoubleValue(m_oLine.getPriceTax());
+        } catch (BasicException e) {
+            logger.log(Level.FINE, "Cannot apply quantity price tiers", e);
+        } finally {
+            m_bsettingprice = false;
+        }
+    }
+
     private class RecalculatePrice implements PropertyChangeListener {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            if (m_bsettingprice) {
+                return;
+            }
 
             Double value = m_jPrice.getDoubleValue();
             if (value == null || value == 0.0) {
@@ -149,6 +194,9 @@ public class JProductLineEdit extends javax.swing.JDialog {
     private class RecalculatePriceTax implements PropertyChangeListener {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            if (m_bsettingprice) {
+                return;
+            }
 
             Double value = m_jPriceTax.getDoubleValue();
             if (value == null || value == 0.0) {
