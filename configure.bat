@@ -1,25 +1,36 @@
 @echo off
-REM    uniCenta oPOS Touch Friendly Point of Sales designed for Touch Screen
-REM    Copyright (c) 2009-2014 uniCenta & previous Openbravo POS works
+REM    uniCenta oPOS - configuration dialog
+REM    Copyright (c) 2009-2014 uniCenta
 REM    http://sourceforge.net/projects/unicentaopos
 REM
-REM    This file is part of uniCenta oPOS
-REM
-REM    uniCenta oPOS is free software: you can redistribute it and/or modify
-REM    it under the terms of the GNU General Public License as published by
-REM    the Free Software Foundation, either version 3 of the License, or
-REM    (at your option) any later version.
-REM
-REM    uniCenta oPOS is distributed in the hope that it will be useful,
-REM    but WITHOUT ANY WARRANTY; without even the implied warranty of
-REM    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-REM    GNU General Public License for more details.
-REM
-REM    You should have received a copy of the GNU General Public License
-REM    along with uniCenta oPOS.  If not, see <http://www.gnu.org/licenses/>
-REM
-set DIRNAME=%~dp0
-set CP="%DIRNAME%unicentaopos.jar"
-set CP=%CP%;"%DIRNAME%locales/"
-set CP=%CP%;"%DIRNAME%lib/substance.jar"
-start /B javaw -cp %CP% com.openbravo.pos.config.JFrmConfig
+REM    This file is part of uniCenta oPOS, released under the GNU GPL v3.
+
+setlocal
+pushd "%~dp0" >nul
+
+REM --- Locate Java 8: JAVA_HOME, then PATH, then common installation folders ---
+set "JAVAX="
+if defined JAVA_HOME if exist "%JAVA_HOME%\bin\javaw.exe" set "JAVAX=%JAVA_HOME%\bin\javaw.exe"
+if not defined JAVAX for %%J in ("javaw.exe") do set "JAVAX=%%~$PATH:J"
+if not defined JAVAX (
+    for /d %%D in ("%ProgramFiles%\Eclipse Adoptium\jdk-8*") do if exist "%%D\bin\javaw.exe" set "JAVAX=%%D\bin\javaw.exe"
+)
+if not defined JAVAX (
+    for /d %%D in ("%ProgramFiles(x86)%\Eclipse Adoptium\jdk-8*") do if exist "%%D\bin\javaw.exe" set "JAVAX=%%D\bin\javaw.exe"
+)
+if not defined JAVAX (
+    echo.
+    echo No se encontro Java 8 ^(javaw.exe^).
+    echo Instale un JRE/JDK 8 o defina la variable JAVA_HOME.
+    echo.
+    pause
+    popd
+    endlocal
+    exit /b 1
+)
+
+set "CP=unicentaopos.jar;lib\*;locales;reports"
+start "" "%JAVAX%" -cp "%CP%" -Ddirname.path=./ com.openbravo.pos.config.JFrmConfig %*
+
+popd
+endlocal
