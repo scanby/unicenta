@@ -22,6 +22,7 @@ package com.openbravo.pos.forms;
 import com.openbravo.format.Formats;
 import com.openbravo.pos.instance.InstanceQuery;
 import com.openbravo.pos.instance.InstanceToken;
+import com.openbravo.pos.updates.UpdateService;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Locale;
@@ -87,6 +88,10 @@ public class StartPOS {
                 
                 AppConfig config = new AppConfig(args);
                 config.load();
+
+                // Silent background update check (disabled by default).
+                // It never shows a dialog: results go to the log only.
+                UpdateService.startSilentBackgroundCheck(config);
                 
                 // set Locale.
                 String slang = config.getProperty("user.language");

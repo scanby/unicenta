@@ -185,6 +185,11 @@ Resultado: **38 tests OK** (16 de Fase 1 + 6 de Fase 2 + 10 de Fase 3 + 6 de Fas
 Además, el target `ant installer.windows` genera `unicentaopos_3.81_windows_setup.exe` con **Inno Setup 6**
 (instalador Windows sin permisos de administrador); verificado con instalación silenciosa en directorio temporal.
 El target `ant release` ejecuta `clean test dist installer.windows` completo.
+
+**Módulo de actualizaciones silenciosas (nuevo):** pestaña "Actualizaciones" en la configuración
+general (`JPanelConfigUpdates`) + `UpdateService` (check HTTPS, comparación de versiones, descarga y
+silent-install opcional) + hilo daemon en `StartPOS`. Por defecto desactivado, sin ventanas ni mensajes
+(solo logging). 5 tests nuevos (43 en total).
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 

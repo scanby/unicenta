@@ -40,7 +40,8 @@ unicentaopos.jar  (todos los módulos compilados juntos en build/classes)
     ├── forms        arranque, sesión, contenedor BeanFactory, menú, DAO del sistema/ventas
     ├── instance     monoinstancia RMI (endurecida en Fase 2)
     ├── scripting    motores BeanShell/Velocity + frontera de confianza (Fase 3)
-    ├── config       diálogo de configuración (7 pestañas, ~2.164 líneas la de periféricos)
+    ├── config       diálogo de configuración (8 pestañas, ~2.164 líneas la de periféricos)
+    ├── updates      módulo de actualización silenciosa (check/descarga/install opcional)
     ├── sales        TPV, bolsa de tickets, restaurante, impuestos, impresión de comandas
     ├── ticket       modelo de ticket, líneas, impuestos, productos
     ├── payment      51 clases: 11 métodos de pago, 9 pasarelas, lectores de banda
@@ -270,7 +271,20 @@ construye el bean con título, ruta, bundle, sentencia SQL y `JParams*`. `Jasper
 carga `.ser` o compila `.jrxml`, y ahora se ejecuta en un `SwingWorker`. `JRDataSourceBasic` puentea
 `BaseSentence` → Jasper. El visor es una copia adaptada de `JRViewer` (LGPL, 2.302 líneas).
 
-### 7.7 Periféricos, presencia y mantenimiento
+### 7.7 Módulo de actualizaciones silenciosas (`pos.updates`)
+- **Pestaña "Actualizaciones"** en el diálogo de configuración (`JPanelConfigUpdates`), con
+  activación, modo silencioso, instalación automática opcional, URL del servidor, intervalo y
+  directorio de descarga. El botón "Buscar ahora" usa un `SwingWorker`: toda la comprobación y
+  descarga ocurren fuera del EDT y el resultado se muestra solo en una etiqueta (sin diálogos).
+- **`UpdateService`** consulta por HTTPS el endpoint de GitHub "latest release" (sin librerías
+  externas), compara versiones numéricamente (ignorando sufijos como `-hardened-1`, para no
+  ofrecer siempre la misma release), descarga el instalador a `~/.unicentaopos-updates` y,
+  solo si `update.autoInstall=true`, lo ejecuta con `/VERYSILENT /SUPPRESSMSGBOXES`.
+- **`StartPOS`** inicia un hilo daemon que comprueba silenciosamente al arrancar y cada N horas;
+  todos los resultados se registran en `java.util.logging`. Por seguridad, `update.enabled=false`
+  por defecto y la URL solo acepta HTTPS.
+
+### 7.8 Periféricos, presencia y mantenimiento
 
 - Básculas: Casio PD1, Samsung ESP, serie genérica, diálogo y falsa (`DeviceScale` según `machine.scale`).
 - Escáner ScanPal2: protocolo serie READ/CIPHER/ACK/OVER para descargar conteos y subir catálogo.

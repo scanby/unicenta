@@ -489,6 +489,7 @@
             <arg value="com.openbravo.pos.forms.BeanNameValidatorTest"/>
             <arg value="com.openbravo.pos.ticket.TicketWarrantyTest"/>
             <arg value="com.openbravo.pos.reports.JasperReportLoaderTest"/>
+            <arg value="com.openbravo.pos.updates.UpdateServiceTest"/>
             <arg value="com.openbravo.data.loader.DataWriteUtilsTest"/>
             <arg value="com.openbravo.data.loader.NormalBuilderTest"/>
         </java>

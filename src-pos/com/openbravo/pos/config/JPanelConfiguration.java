@@ -93,6 +93,10 @@ public class JPanelConfiguration extends JPanel implements JPanelView {
         panel = new JPanelTicketSetup();
         m_panelconfig.add(panel);
         jPanelTicketSetup.add(panel.getConfigComponent());
+
+        panel = new com.openbravo.pos.updates.JPanelConfigUpdates();
+        m_panelconfig.add(panel);
+        jPanelUpdates.add(panel.getConfigComponent());
         
         
         //m_panelconfig.add(new JPanelConfigGeneral());
@@ -258,6 +262,11 @@ public class JPanelConfiguration extends JPanel implements JPanelView {
         jPanelTicketSetup.setLayout(new javax.swing.BoxLayout(jPanelTicketSetup, javax.swing.BoxLayout.LINE_AXIS));
         jTabbedPane1.addTab("Ticket Setup", jPanelTicketSetup);
 
+        jPanelUpdates = new javax.swing.JPanel();
+        jPanelUpdates.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        jPanelUpdates.setLayout(new java.awt.BorderLayout());
+        jTabbedPane1.addTab("Actualizaciones", jPanelUpdates);
+
         jbtnRestore.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         jbtnRestore.setText(AppLocal.getIntString("Button.Factory")); // NOI18N
         jbtnRestore.setMaximumSize(new java.awt.Dimension(103, 33));
@@ -361,6 +370,7 @@ public class JPanelConfiguration extends JPanel implements JPanelView {
     private javax.swing.JPanel jPanelPeripheral;
     private javax.swing.JPanel jPanelSystem;
     private javax.swing.JPanel jPanelTicketSetup;
+    private javax.swing.JPanel jPanelUpdates;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JButton jbtnExit;
     private javax.swing.JButton jbtnRestore;
