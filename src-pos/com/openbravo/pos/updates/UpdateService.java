@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.logging.Level;
@@ -186,6 +187,77 @@ public final class UpdateService {
         }
     }
 
+    /**
+     * Builds a batch file that waits until this JVM has exited and then runs
+     * the installer silently. Windows cannot overwrite the JARs while the POS
+     * is running, so an immediate silent install always fails.
+     */
+    static File createScheduleScript(File installer, String pid, String appDir) throws Exception {
+        File script = new File(installer.getParentFile(), "install-pending.cmd");
+        StringBuilder sb = new StringBuilder();
+        sb.append("@echo off\r\n");
+        sb.append(":wait\r\n");
+        sb.append("tasklist /FI \"PID eq ").append(pid).append("\" 2>NUL | find /I \"")
+                .append(pid).append("\" >NUL\r\n");
+        sb.append("if not errorlevel 1 (\r\n");
+        sb.append("  ping -n 2 127.0.0.1 >NUL\r\n");
+        sb.append("  goto wait\r\n");
+        sb.append(")\r\n");
+        sb.append("ping -n 2 127.0.0.1 >NUL\r\n");
+        sb.append("start \"\" \"").append(installer.getAbsolutePath())
+                .append("\" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR=\"")
+                .append(appDir).append("\"\r\n");
+        sb.append("del \"%~f0\" >NUL 2>&1\r\n");
+        FileOutputStream out = new FileOutputStream(script);
+        try {
+            out.write(sb.toString().getBytes("UTF-8"));
+        } finally {
+            out.close();
+        }
+        return script;
+    }
+
+    /**
+     * Schedules the downloaded installer to run silently as soon as the POS
+     * process exits, and returns immediately.
+     */
+    public static boolean scheduleInstallAfterExit(AppConfig config, File installer) {
+        if (installer == null || !installer.isFile()) {
+            return false;
+        }
+        try {
+            String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+            String appDir = new File(System.getProperty("dirname.path", ".")).getCanonicalPath();
+            File script = createScheduleScript(installer, pid, appDir);
+            new ProcessBuilder("cmd.exe", "/c", "start", "\"\"", "/B",
+                    "\"" + script.getAbsolutePath() + "\"").start();
+            logger.log(Level.INFO, "Installer scheduled to run after exit: {0}", installer);
+            return true;
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Cannot schedule the silent installer", e);
+            return false;
+        }
+    }
+
+    /**
+     * Returns the most recently downloaded installer, so the user can retry an
+     * installation that failed (for example because the POS had files locked).
+     */
+    public static File findLatestDownload(AppConfig config) {
+        File dir = UpdateSettings.getDownloadDir(config);
+        File[] files = dir.listFiles();
+        File latest = null;
+        if (files != null) {
+            for (File f : files) {
+                if (f.isFile() && f.getName().toLowerCase().endsWith(".exe")
+                        && (latest == null || f.lastModified() > latest.lastModified())) {
+                    latest = f;
+                }
+            }
+        }
+        return latest;
+    }
+
     /** Starts a daemon thread that checks (and optionally downloads) silently. */
     public static void startSilentBackgroundCheck(final AppConfig config) {
         UpdateSettings.installDefaults(config);
@@ -207,7 +279,7 @@ public final class UpdateService {
                                 File downloaded = download(config, info);
                                 config.setProperty(UpdateSettings.LAST_VERSION, info.getVersion());
                                 if (downloaded != null && UpdateSettings.isAutoInstall(config)) {
-                                    installSilently(downloaded);
+                                    scheduleInstallAfterExit(config, downloaded);
                                 }
                             }
                             try {

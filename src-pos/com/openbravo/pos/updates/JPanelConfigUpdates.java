@@ -50,7 +50,8 @@ public class JPanelConfigUpdates extends JPanel implements PanelConfig {
     private final JTextField jtxtInterval = new JTextField(6);
     private final JTextField jtxtDir = new JTextField(28);
     private final JLabel jlblStatus = new JLabel(" ");
-    private final JButton jbtnCheck = new JButton("Buscar actualizaciones ahora");
+    private final JButton jbtnCheck = new JButton("Buscar e instalar ahora");
+    private final JButton jbtnInstall = new JButton("Instalar descarga pendiente");
 
     private AppConfig config;
 
@@ -104,6 +105,9 @@ public class JPanelConfigUpdates extends JPanel implements PanelConfig {
         add(jbtnCheck, c);
 
         c.gridy = 7;
+        add(jbtnInstall, c);
+
+        c.gridy = 8;
         add(jlblStatus, c);
 
         jbtnCheck.addActionListener(new java.awt.event.ActionListener() {
@@ -112,6 +116,24 @@ public class JPanelConfigUpdates extends JPanel implements PanelConfig {
                 checkNow();
             }
         });
+        jbtnInstall.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                installPending();
+            }
+        });
+    }
+
+    private void installPending() {
+        File pending = UpdateService.findLatestDownload(config);
+        if (pending == null) {
+            jlblStatus.setText("No hay ninguna descarga pendiente.");
+            return;
+        }
+        boolean ok = UpdateService.scheduleInstallAfterExit(config, pending);
+        jlblStatus.setText(ok
+                ? "Instalacion programada al cerrar el programa. Vuelva a abrir la aplicacion."
+                : "No se pudo programar la instalacion de " + pending.getName() + ". Consulte el log.");
     }
 
     private void checkNow() {
@@ -134,11 +156,14 @@ public class JPanelConfigUpdates extends JPanel implements PanelConfig {
                             + ") pero no se pudo descargar. Consulte el log.";
                 }
                 cfg.setProperty(UpdateSettings.LAST_VERSION, info.getVersion());
-                boolean installed = UpdateSettings.isAutoInstall(cfg)
-                        && UpdateService.installSilently(downloaded);
-                return installed
-                        ? "Actualizacion " + info.getVersion() + " instalada silenciosamente."
-                        : "Actualizacion " + info.getVersion() + " descargada en " + downloaded;
+                // A manual click always tries to install; the autoInstall flag
+                // only controls the unattended background check.
+                boolean scheduled = UpdateService.scheduleInstallAfterExit(cfg, downloaded);
+                return scheduled
+                        ? "Actualizacion " + info.getVersion() + " descargada e instalada al cerrar. "
+                          + "Vuelva a abrir la aplicacion."
+                        : "Descargada " + info.getVersion() + " pero no se pudo programar. "
+                          + "Use 'Instalar descarga pendiente' o consulte el log.";
             }
 
             @Override

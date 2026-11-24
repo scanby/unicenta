@@ -279,8 +279,12 @@ carga `.ser` o compila `.jrxml`, y ahora se ejecuta en un `SwingWorker`. `JRData
   descarga ocurren fuera del EDT y el resultado se muestra solo en una etiqueta (sin diálogos).
 - **`UpdateService`** consulta por HTTPS el endpoint de GitHub "latest release" (sin librerías
   externas), compara versiones numéricamente (ignorando sufijos como `-hardened-1`, para no
-  ofrecer siempre la misma release), descarga el instalador a `~/.unicentaopos-updates` y,
-  solo si `update.autoInstall=true`, lo ejecuta con `/VERYSILENT /SUPPRESSMSGBOXES`.
+  ofrecer siempre la misma release) y descarga el instalador a `~/.unicentaopos-updates`.
+- **Instalación diferida:** Windows no puede sobrescribir los JAR mientras el POS está abierto
+  (instalación inmediata devuelve exit=5). Por eso tanto el botón manual como el check automático
+  escriben un `install-pending.cmd` que espera a que termine el PID actual y luego ejecuta el
+  instalador con `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` en el directorio de la aplicación;
+  el script se autodestruye. Verificado de extremo a extremo con un directorio temporal.
 - **`StartPOS`** inicia un hilo daemon que comprueba silenciosamente al arrancar y cada N horas;
   todos los resultados se registran en `java.util.logging`. Por seguridad, `update.enabled=false`
   por defecto y la URL solo acepta HTTPS.
