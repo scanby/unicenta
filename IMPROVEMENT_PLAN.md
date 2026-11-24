@@ -190,6 +190,10 @@ El target `ant release` ejecuta `clean test dist installer.windows` completo.
 general (`JPanelConfigUpdates`) + `UpdateService` (check HTTPS, comparación de versiones, descarga y
 silent-install opcional) + hilo daemon en `StartPOS`. Por defecto desactivado, sin ventanas ni mensajes
 (solo logging). 5 tests nuevos (43 en total).
+
+**Idioma por defecto (español):** bundles `*_es` instalados en `locales/` y `reports/`, defaults `es_ES`
+en `AppConfig` y migración única de configuraciones antiguas desde `StartPOS` (`locale.migration`).
+4 tests nuevos (47 en total). Verificado: el config migró de `es_CO` a `es_ES` en el arranque.
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 

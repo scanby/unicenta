@@ -89,6 +89,9 @@ public class StartPOS {
                 AppConfig config = new AppConfig(args);
                 config.load();
 
+                // Spanish is the shipped default; migrate older English configs once.
+                config.ensureDefaultSpanish();
+
                 // Silent background update check (disabled by default).
                 // It never shows a dialog: results go to the log only.
                 UpdateService.startSilentBackgroundCheck(config);

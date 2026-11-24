@@ -388,6 +388,12 @@ NetBeans imposibles de testear.
   idioma con 517 `.properties`** (513 en subcarpetas). Sufijos: `es`, `es_AR`, `es_MX`, `pt`, `pt_BR`,
   `it`, `fr`, `de`, `nl`, `hr`, `et`, `ar`, `en_US`, `al_SQ`; English y Slovenian usan los nombres
   sin sufijo (bundles por defecto).
+- **Idioma por defecto: español (es_ES).** `AppConfig.loadDefault()` fija `user.language=es`,
+  `user.country=ES`; `StartPOS` llama a `ensureDefaultSpanish()`, que migra una vez las instalaciones
+  antiguas (marcador `locale.migration=es-3.81`) y guarda el `.properties`. Se añadieron variantes
+  `*_es.properties` de los 4 bundles en `locales/` y 39 bundles de reportes en
+  `reports/com/openbravo/reports/`, manteniendo los ingleses como fallback. El usuario puede cambiar
+  el idioma en Configuración → Locale.
 - Cada idioma tiene `locales/<bundle>_<sufijo>.properties` y `reports/com/openbravo/reports/*_messages_<sufijo>.properties`.
   Brazilian y Portuguese solo traen los 4 bundles de aplicación; Arabic tiene los 4 directamente en
   la carpeta (sin el subdirectorio `locales/`).

@@ -20,7 +20,6 @@
 package com.openbravo.pos.forms;
 
 import java.io.*;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,6 +33,10 @@ import java.util.logging.Logger;
 public class AppConfig implements AppProperties {
 
     private static final Logger logger = Logger.getLogger("com.openbravo.pos.forms.AppConfig");
+
+    /** Marker used to migrate existing installations to the Spanish locale once. */
+    private static final String LOCALE_MIGRATION_KEY = "locale.migration";
+    private static final String APP_VERSION_MARKER = "es-3.81";
      
     private static AppConfig m_instance = null;
     private Properties m_propsconfig;
@@ -153,6 +156,29 @@ public class AppConfig implements AppProperties {
     }
 
     /**
+     * One-time migration for installations created with an older version:
+     * they kept the system locale (typically English). Forces Spanish once,
+     * remembers it in the properties file and persists the change.
+     *
+     * @return true when the locale was changed
+     */
+    public boolean ensureDefaultSpanish() {
+        if (APP_VERSION_MARKER.equals(m_propsconfig.getProperty(LOCALE_MIGRATION_KEY))) {
+            return false;
+        }
+        m_propsconfig.setProperty("user.language", "es");
+        m_propsconfig.setProperty("user.country", "ES");
+        m_propsconfig.setProperty("user.variant", "");
+        m_propsconfig.setProperty(LOCALE_MIGRATION_KEY, APP_VERSION_MARKER);
+        try {
+            save();
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Cannot persist the Spanish locale migration", e);
+        }
+        return true;
+    }
+
+    /**
      *
      * @return 0 or 00 number keypad boolean true/false
      */
@@ -219,10 +245,11 @@ public class AppConfig implements AppProperties {
   */       
         m_propsconfig.setProperty("machine.hostname", getLocalHostName());
         
-        Locale l = Locale.getDefault();
-        m_propsconfig.setProperty("user.language", l.getLanguage());
-        m_propsconfig.setProperty("user.country", l.getCountry());
-        m_propsconfig.setProperty("user.variant", l.getVariant());     
+        // Spanish is the default locale of this distribution. The user can
+        // still change it in Configuracion -> Locale.
+        m_propsconfig.setProperty("user.language", "es");
+        m_propsconfig.setProperty("user.country", "ES");
+        m_propsconfig.setProperty("user.variant", "");
         
         m_propsconfig.setProperty("swing.defaultlaf", System.getProperty("swing.defaultlaf", "javax.swing.plaf.metal.MetalLookAndFeel"));
 //        m_propsconfig.setProperty("swing.defaultlaf", System.getProperty("swing.defaultlaf", "javax.swing.plaf.synth.SynthLookAndFeel"));        
