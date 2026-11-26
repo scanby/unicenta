@@ -173,6 +173,34 @@ public class DataLogicSales extends BeanFactoryDataSingle {
                 PriceBreakInfo.getSerializerRead()).list(productId);
     }
 
+    /**
+     * Saves the tiers carried in position 25 of the product values array.
+     * Called inside the same transaction as the PRODUCTS insert/update, so a
+     * failure rolls back both and the editor reports the error to the user.
+     */
+    @SuppressWarnings("unchecked")
+    private void savePriceBreaksInTransaction(Object[] params) throws BasicException {
+        if (params == null || params.length < 26) {
+            return;
+        }
+        String productId = (String) params[0];
+        Object value = params[25];
+        new PreparedSentence(s,
+                "DELETE FROM PRODUCTS_PRICEBREAKS WHERE PRODUCT = ?",
+                SerializerWriteString.INSTANCE).exec(productId);
+        if (value instanceof java.util.List) {
+            for (Object item : (java.util.List<?>) value) {
+                PriceBreakInfo b = (PriceBreakInfo) item;
+                new PreparedSentence(s,
+                        "INSERT INTO PRODUCTS_PRICEBREAKS (ID, PRODUCT, MINQUANTITY, PRICESELL) "
+                        + "VALUES (?, ?, ?, ?)",
+                        new SerializerWriteBasic(PriceBreakInfo.FIELDS))
+                        .exec(new Object[] {UUID.randomUUID().toString(), productId,
+                             b.getMinQuantity(), b.getPriceSell()});
+            }
+        }
+    }
+
     /** Replaces all the quantity price tiers of a product. */
     public final SentenceExec setPriceBreaks(final String productId, final List<PriceBreakInfo> breaks) {
         return new SentenceExecTransaction(s) {
@@ -228,7 +256,7 @@ public class DataLogicSales extends BeanFactoryDataSingle {
                 + "STOCKCURRENT.UNITS "                     //21                       
                 + "FROM STOCKCURRENT LEFT JOIN PRODUCTS ON (STOCKCURRENT.PRODUCT = PRODUCTS.ID) "
                 + "WHERE ID = ? "
-                + "GROUP BY ID, REFERENCE, NAME;"
+                + "GROUP BY ID, REFERENCE, NAME"
 		, SerializerWriteString.INSTANCE
 		, ProductInfoExt.getSerializerRead()).find(id);
     }
@@ -1433,6 +1461,9 @@ public Object transact() throws BasicException {
                             , "INSERT INTO STOCKCURRENT (LOCATION, PRODUCT, UNITS) VALUES ('0', ?, 0.0)"
                             , new SerializerWriteBasicExt(productsRow.getDatas(), new int[] {0})).exec(params);                            
                                     
+                        if (i > 0) {
+                            savePriceBreaksInTransaction(values);
+                        }
 			if (i > 0 && ((Boolean)values[14])) {
 				return new PreparedSentence(s
 					, "INSERT INTO PRODUCTS_CAT (PRODUCT, CATORDER) VALUES (?, ?)"
@@ -1471,6 +1502,9 @@ public Object transact() throws BasicException {
                                             10, 11, 12, 13, 16, 17, 18, 19, 20, 
                                             21, 22, 23, 0})).exec(params);
                     
+                        if (i > 0) {
+                            savePriceBreaksInTransaction(values);
+                        }
 			if (i > 0) {
 				if (((Boolean)values[14])) {
 					if (new PreparedSentence(s

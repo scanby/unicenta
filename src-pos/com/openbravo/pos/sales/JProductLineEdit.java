@@ -76,13 +76,13 @@ public class JProductLineEdit extends javax.swing.JDialog {
         m_bsettingprice = false;
         m_dBasePrice = oLine.getPrice();
         try {
-            m_dlSales = (DataLogicSales) app.getBean("com.openbravo.pos.forms.DataLogicSales");
-            ProductInfoExt product = m_dlSales.getProductInfo(oLine.getProductID());
-            if (product != null) {
-                m_dBasePrice = product.getPriceSell();
+            String stored = oLine.getProperty("product.pricebase");
+            if (stored != null) {
+                m_dBasePrice = Double.parseDouble(stored);
             }
+            m_dlSales = (DataLogicSales) app.getBean("com.openbravo.pos.forms.DataLogicSales");
         } catch (Exception e) {
-            logger.log(Level.FINE, "Cannot load base price for quantity tiers", e);
+            logger.log(Level.FINE, "Cannot read base price for quantity tiers", e);
         }
 
 //  JG 7 May 14 Allow User edit of Product.Name if has EditLine permissions

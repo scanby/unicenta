@@ -295,8 +295,14 @@ carga `.ser` o compila `.jrxml`, y ahora se ejecuta en un `SwingWorker`. `JRData
   los tramos antes de que exista la fila de producto en altas.
 - `ProductsEditor` añade la pestaña **"Precios por cantidad"** (`JPanelPriceBreaks`): check de
   activación, tabla de tramos "cantidad desde → precio", alta/baja de líneas. Se carga en
-  `writeValueEdit` y se persiste en `createValue()` mediante `DataLogicSales.setPriceBreaks()`
-  (transacción DELETE + INSERT).
+  `writeValueEdit`.
+- **Persistencia:** `createValue()` devuelve 26 posiciones: las 25 columnas de `PRODUCTS` y, en la 25,
+  la lista de tramos. `getProductCatInsert()` / `getProductCatUpdate()` guardan los tramos con
+  DELETE+INSERT **dentro de la misma transacción** del producto, de modo que un fallo revierte todo y
+  el editor muestra el error. Guardado verificado contra una copia de la BD real.
+- `JPanelTicket` guarda el precio base en la propiedad `product.pricebase` de la línea, para que
+  `JProductLineEdit` recalcule los tramos al cambiar cantidad sin depender de la vista obsoleta
+  `getProductInfo` (que tenía un `GROUP BY` inválido, corregido).
 - `ProductPricing.getUnitPrice(base, unidades, tramos)` aplica el **precio más bajo** entre los
   tramos cuya cantidad mínima esté cubierta; el precio base actúa como techo (un tramo nunca encarece).
 - Se aplica al crear líneas en `JPanelTicket.addTicketLine(...)` y al cambiar la cantidad en

@@ -583,7 +583,10 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
     @Override
     public Object createValue() throws BasicException {
 
-        Object[] myprod = new Object[25];
+        // Index 25 is extra data consumed by DataLogicSales when it saves the
+        // product: the quantity price tiers. The 25 first positions remain the
+        // PRODUCTS row expected by productsRow / the SQL serializers.
+        Object[] myprod = new Object[26];
         myprod[0] = m_id;
         myprod[1] = m_jRef.getText();
         myprod[2] = m_jCode.getText();
@@ -620,15 +623,7 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
 
 // JG July 2014
         myprod[24] = Formats.DOUBLE.parseValue(m_jStockUnits.getText());
-
-        // Quantity price tiers are stored in their own table. Saving them here
-        // keeps the editor workflow unchanged for both insert and update.
-        try {
-            m_dlSales.setPriceBreaks((String) m_id,
-                    m_jPriceBreaks.isActive() ? m_jPriceBreaks.getBreaks() : null).exec(null);
-        } catch (BasicException e) {
-            logger.log(Level.WARNING, "Cannot save quantity price tiers for product " + m_id, e);
-        }
+        myprod[25] = m_jPriceBreaks.isActive() ? m_jPriceBreaks.getBreaks() : null;
 
         return myprod;        
     

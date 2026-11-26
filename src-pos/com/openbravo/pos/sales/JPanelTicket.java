@@ -611,6 +611,10 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
    }
 
     private void addTicketLine(ProductInfoExt oProduct, double dMul, double dPrice) {
+        // Remember the regular price in the line so the quantity editor can
+        // recalculate tiers without querying the (legacy, fragile) product view.
+        java.util.Properties props = (java.util.Properties) oProduct.getProperties().clone();
+        props.setProperty("product.pricebase", Double.toString(dPrice));
         // Quantity price tiers: choose the best configured price for this amount of units.
         try {
             List<PriceBreakInfo> breaks = dlSales.getPriceBreaks(oProduct.getID());
@@ -629,10 +633,10 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
             if (m_jaddtax.isSelected()) {
                 dPrice /= (1 + tax.getRate());
             }
-                addTicketLine(new TicketLineInfo(oProduct, dMul, dPrice, tax, (java.util.Properties) (oProduct.getProperties().clone())));
-        } else {        
+                addTicketLine(new TicketLineInfo(oProduct, dMul, dPrice, tax, props));
+        } else {
                 TaxInfo tax = taxeslogic.getTaxInfo(oProduct.getTaxCategoryID(), m_oTicket.getCustomer());
-                addTicketLine(new TicketLineInfo(oProduct, dMul, dPrice, tax, (java.util.Properties) (oProduct.getProperties().clone())));                
+                addTicketLine(new TicketLineInfo(oProduct, dMul, dPrice, tax, props));
             }
         }
     

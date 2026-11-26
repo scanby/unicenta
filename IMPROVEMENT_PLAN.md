@@ -203,6 +203,11 @@ añadir líneas y al cambiar cantidades. 6 tests nuevos (53 en total) + DDL vali
 la instalación se programa al cerrar el POS (`install-pending.cmd`) porque Windows bloquea los JAR
 en uso (exit=5 al instalar en caliente). Botón "Instalar descarga pendiente" para reintentar.
 2 tests nuevos (55 en total); verificación end-to-end con instalación en directorio temporal.
+
+**Corrección precios por cantidad:** la persistencia se movió de `createValue()` a la transacción del
+propio INSERT/UPDATE de PRODUCTS (parámetro extra 25), y el precio base viaja en la línea
+(`product.pricebase`) para recalcular al cambiar cantidad. Verificado con la BD real (copia):
+2 tramos guardados y precios 150→7 a partir de 2 uds y →6 a partir de 5 uds.
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 
