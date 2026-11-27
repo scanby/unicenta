@@ -152,6 +152,17 @@ public final class UpdateService {
                 target.delete();
                 return null;
             }
+            // Remove older downloaded installers so a stale build can never
+            // be installed later instead of the one just downloaded.
+            File[] old = dir.listFiles();
+            if (old != null) {
+                for (File f : old) {
+                    if (f.isFile() && !f.equals(target)
+                            && f.getName().toLowerCase().endsWith(".exe")) {
+                        f.delete();
+                    }
+                }
+            }
             logger.log(Level.INFO, "Downloaded update to {0} ({1} bytes)",
                     new Object[] {target, target.length()});
             return target;

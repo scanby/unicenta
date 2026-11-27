@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -185,19 +186,24 @@ public class DataLogicSales extends BeanFactoryDataSingle {
         }
         String productId = (String) params[0];
         Object value = params[25];
-        new PreparedSentence(s,
-                "DELETE FROM PRODUCTS_PRICEBREAKS WHERE PRODUCT = ?",
-                SerializerWriteString.INSTANCE).exec(productId);
-        if (value instanceof java.util.List) {
-            for (Object item : (java.util.List<?>) value) {
-                PriceBreakInfo b = (PriceBreakInfo) item;
-                new PreparedSentence(s,
-                        "INSERT INTO PRODUCTS_PRICEBREAKS (ID, PRODUCT, MINQUANTITY, PRICESELL) "
-                        + "VALUES (?, ?, ?, ?)",
-                        new SerializerWriteBasic(PriceBreakInfo.FIELDS))
-                        .exec(new Object[] {UUID.randomUUID().toString(), productId,
-                             b.getMinQuantity(), b.getPriceSell()});
+        try {
+            new PreparedSentence(s,
+                    "DELETE FROM PRODUCTS_PRICEBREAKS WHERE PRODUCT = ?",
+                    SerializerWriteString.INSTANCE).exec(productId);
+            if (value instanceof java.util.List) {
+                for (Object item : (java.util.List<?>) value) {
+                    PriceBreakInfo b = (PriceBreakInfo) item;
+                    new PreparedSentence(s,
+                            "INSERT INTO PRODUCTS_PRICEBREAKS (ID, PRODUCT, MINQUANTITY, PRICESELL) "
+                            + "VALUES (?, ?, ?, ?)",
+                            new SerializerWriteBasic(PriceBreakInfo.FIELDS))
+                            .exec(new Object[] {UUID.randomUUID().toString(), productId,
+                                 b.getMinQuantity(), b.getPriceSell()});
+                }
             }
+        } catch (BasicException e) {
+            logger.log(Level.SEVERE, "Cannot save quantity price tiers for product " + productId, e);
+            throw e;
         }
     }
 
