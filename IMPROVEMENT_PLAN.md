@@ -208,6 +208,10 @@ en uso (exit=5 al instalar en caliente). Botón "Instalar descarga pendiente" pa
 propio INSERT/UPDATE de PRODUCTS (parámetro extra 25), y el precio base viaja en la línea
 (`product.pricebase`) para recalcular al cambiar cantidad. Verificado con la BD real (copia):
 2 tramos guardados y precios 150→7 a partir de 2 uds y →6 a partir de 5 uds.
+
+Además, el módulo de actualizaciones elimina los instaladores antiguos tras cada descarga: una descarga
+antigua del release v3.82 había vuelto a sobrescribir el JAR instalado con una compilación sin la
+persistencia transaccional (causa del error "no se puede grabar el registro" al crear productos).
 El target `test` invoca `org.junit.runner.JUnitCore` mediante `<java>`, por lo que **no** requiere
 `ant-junit.jar` ni copiar JUnit a `ANT_HOME/lib`.
 
