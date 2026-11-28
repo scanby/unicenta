@@ -38,9 +38,17 @@ public class AppLocal {
     public static final String APP_ID = "unicentaopos";
 
     /**
-     *
+     * Database schema version. Only changes when a SQL upgrade script is added;
+     * used by JRootApp to select <DB>-create.sql / <DB>-upgrade-<version>.sql.
      */
     public static final String APP_VERSION = "3.82";
+
+    /**
+     * Build version, incremented on every code change. Shown in window titles,
+     * the customer display, the installer and the release tag so it is always
+     * clear which build is being tested.
+     */
+    public static final String APP_BUILD = "3.82.1";
 
     private static final LocaleResources m_resources;
     

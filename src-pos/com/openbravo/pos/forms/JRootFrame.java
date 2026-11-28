@@ -81,7 +81,7 @@ public class JRootFrame extends javax.swing.JFrame implements AppMessage {
             } catch (IOException e) {
             }   
 
-            setTitle(AppLocal.APP_NAME + " - " + AppLocal.APP_VERSION);       
+            setTitle(AppLocal.APP_NAME + " - " + AppLocal.APP_BUILD);       
             pack();
             setLocationRelativeTo(null);        
             

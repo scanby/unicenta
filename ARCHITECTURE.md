@@ -10,7 +10,7 @@
 
 | Concepto | Dato |
 |---|---|
-| Versión | **3.82** (añade precios por cantidad; la 3.81 introdujo seguridad y actualizaciones silenciosas) |
+| Versión | **Build 3.82.1** / esquema BD **3.82**. Cada cambio incrementa el build; el esquema solo cambia con un script SQL |
 | Naturaleza | TPV/POS de código abierto para pantalla táctil, descendiente directo de Openbravo POS 1.x |
 | Licencia | GPL v3 (`LICENSE.md`); algunas clases Jasper adaptadas son LGPL |
 | Lenguaje | Java 7 (target `1.7`), Swing, JDBC, BeanShell, Velocity, JasperReports, JavaPOS/ESC-POS, RMI, RXTX |
@@ -413,6 +413,11 @@ NetBeans imposibles de testear.
   idioma con 517 `.properties`** (513 en subcarpetas). Sufijos: `es`, `es_AR`, `es_MX`, `pt`, `pt_BR`,
   `it`, `fr`, `de`, `nl`, `hr`, `et`, `ar`, `en_US`, `al_SQ`; English y Slovenian usan los nombres
   sin sufijo (bundles por defecto).
+- **Control de versiones:** `AppLocal.APP_VERSION` es la versión del **esquema** (3.82) y la usa
+  `JRootApp` para elegir los scripts de BD; `AppLocal.APP_BUILD` es la versión de **compilación**
+  (3.82.1) y aparece en títulos, visor, instalador y tag del release. El script `bump-version.ps1`
+  actualiza los tres sitios a la vez. Así cada modificación produce un build identificable sin
+  provocar actualizaciones de BD.
 - **Idioma por defecto: español (es_ES).** `AppConfig.loadDefault()` fija `user.language=es`,
   `user.country=ES`; `StartPOS` llama a `ensureDefaultSpanish()`, que migra una vez las instalaciones
   antiguas (marcador `locale.migration=es-3.81`) y guarda el `.properties`. Se añadieron variantes

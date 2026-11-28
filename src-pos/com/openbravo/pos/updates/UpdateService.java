@@ -82,7 +82,7 @@ public final class UpdateService {
             }
             String version = tag.group(1);
 
-            String current = AppLocal.APP_VERSION;
+            String current = AppLocal.APP_BUILD;
             if (compareVersions(version, current) <= 0) {
                 logger.log(Level.INFO, "No update available (server={0}, local={1})",
                         new Object[] {version, current});
