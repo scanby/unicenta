@@ -66,6 +66,7 @@ public class JPanelPriceBreaks extends JPanel {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 setControlsEnabled(jchkActive.isSelected());
+                firePropertyChange("pricebreaks", null, isActive());
             }
         });
         setControlsEnabled(false);
@@ -136,6 +137,7 @@ public class JPanelPriceBreaks extends JPanel {
             }
             breaks.add(new PriceBreakInfo(UUID.randomUUID().toString(), null, qty, price));
             refreshTable();
+            firePropertyChange("pricebreaks", null, isActive());
             jtxtQuantity.setText(null);
             jtxtPrice.setText(null);
         } catch (BasicException e) {
@@ -148,6 +150,7 @@ public class JPanelPriceBreaks extends JPanel {
         if (row >= 0 && row < breaks.size()) {
             breaks.remove(row);
             refreshTable();
+            firePropertyChange("pricebreaks", null, isActive());
         }
     }
 

@@ -618,6 +618,8 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
         // Quantity price tiers: choose the best configured price for this amount of units.
         try {
             List<PriceBreakInfo> breaks = dlSales.getPriceBreaks(oProduct.getID());
+            logger.log(Level.INFO, "Producto {0}: {1} tramos, base={2}, uds={3}",
+                    new Object[] {oProduct.getID(), breaks.size(), dPrice, dMul});
             dPrice = ProductPricing.getUnitPrice(dPrice, dMul, breaks);
         } catch (BasicException e) {
             logger.log(Level.FINE, "Cannot read quantity price tiers for " + oProduct.getID(), e);

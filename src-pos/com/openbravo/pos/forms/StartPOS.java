@@ -23,6 +23,10 @@ import com.openbravo.format.Formats;
 import com.openbravo.pos.instance.InstanceQuery;
 import com.openbravo.pos.instance.InstanceToken;
 import com.openbravo.pos.updates.UpdateService;
+import java.io.File;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Locale;
@@ -77,7 +81,18 @@ public class StartPOS {
      * @param args
      */
     public static void main (final String args[]) {
-        
+
+        // javaw has no console: keep a log file so support can diagnose
+        // product/tier saves and update installations.
+        try {
+            File logFile = new File(System.getProperty("user.home"), "unicentaopos.log");
+            FileHandler handler = new FileHandler(logFile.getAbsolutePath(), true);
+            handler.setFormatter(new SimpleFormatter());
+            Logger.getLogger("com.openbravo").addHandler(handler);
+        } catch (Exception e) {
+            // Logging must never prevent the POS from starting.
+        }
+
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {

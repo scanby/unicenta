@@ -99,6 +99,7 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
         initComponents();
         m_dlSales = dlSales;
         jTabbedPane1.addTab("Precios por cantidad", m_jPriceBreaks);
+        m_jPriceBreaks.addPropertyChangeListener("pricebreaks", dirty);
 
         // Taxes sentence
         taxsent = dlSales.getTaxList();
@@ -484,7 +485,11 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
         m_jTitle.setText(Formats.STRING.formatValue(myprod[1]) + " - " + Formats.STRING.formatValue(myprod[3]));
         m_id = myprod[0];
         try {
-            m_jPriceBreaks.setBreaks(m_dlSales.getPriceBreaks((String) m_id));
+            java.util.List<com.openbravo.pos.ticket.PriceBreakInfo> loaded =
+                    m_dlSales.getPriceBreaks((String) m_id);
+            logger.log(Level.INFO, "Producto {0}: tramos cargados={1}",
+                    new Object[] {m_id, loaded.size()});
+            m_jPriceBreaks.setBreaks(loaded);
         } catch (BasicException e) {
             m_jPriceBreaks.clear();
             logger.log(Level.WARNING, "Cannot load quantity price tiers for product " + m_id, e);
@@ -624,6 +629,8 @@ public final class ProductsEditor extends JPanel implements EditorRecord {
 // JG July 2014
         myprod[24] = Formats.DOUBLE.parseValue(m_jStockUnits.getText());
         myprod[25] = m_jPriceBreaks.isActive() ? m_jPriceBreaks.getBreaks() : null;
+        logger.log(Level.INFO, "Producto {0}: activo={1}, tramos enviados={2}",
+                new Object[] {m_id, m_jPriceBreaks.isActive(), m_jPriceBreaks.getBreaks().size()});
 
         return myprod;        
     

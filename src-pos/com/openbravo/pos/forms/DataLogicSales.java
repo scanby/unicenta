@@ -186,6 +186,9 @@ public class DataLogicSales extends BeanFactoryDataSingle {
         }
         String productId = (String) params[0];
         Object value = params[25];
+        logger.log(Level.INFO, "Guardando tramos de {0}: {1}",
+                new Object[] {productId, value instanceof java.util.List
+                        ? ((java.util.List<?>) value).size() : 0});
         try {
             new PreparedSentence(s,
                     "DELETE FROM PRODUCTS_PRICEBREAKS WHERE PRODUCT = ?",
