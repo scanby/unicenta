@@ -37,6 +37,14 @@ public class ProductPricingTest {
     }
 
     @Test
+    public void tenUnitsOfAThreeHundredPesoProductGetTheTwoHundredFiftyTier() {
+        List<PriceBreakInfo> tiers = Arrays.asList(tier(10, 250.0));
+        assertEquals(300.0, ProductPricing.getUnitPrice(300.0, 9, tiers), 0.001);
+        assertEquals(250.0, ProductPricing.getUnitPrice(300.0, 10, tiers), 0.001);
+        assertEquals(250.0, ProductPricing.getUnitPrice(300.0, 12, tiers), 0.001);
+    }
+
+    @Test
     public void aTierNeverIncreasesThePrice() {
         List<PriceBreakInfo> tiers = Arrays.asList(tier(2, 12.0));
         assertEquals(10.0, ProductPricing.getUnitPrice(10.0, 5, tiers), 0.001);

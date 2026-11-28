@@ -448,6 +448,7 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
          
         m_oTicket = oTicket;
         m_oTicketExt = oTicketExt;
+        m_priceBreaksCache.clear();
        
         if (m_oTicket != null) {            
             // Asign preliminary properties to the receipt
@@ -610,20 +611,73 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
         }
    }
 
+    /** Cache of quantity price tiers, keyed by product id. */
+    private final Map<String, List<PriceBreakInfo>> m_priceBreaksCache =
+            new HashMap<String, List<PriceBreakInfo>>();
+
+    private List<PriceBreakInfo> getCachedPriceBreaks(String productId) {
+        List<PriceBreakInfo> breaks = m_priceBreaksCache.get(productId);
+        if (breaks == null) {
+            try {
+                breaks = dlSales.getPriceBreaks(productId);
+            } catch (BasicException e) {
+                logger.log(Level.FINE, "Cannot read quantity price tiers for " + productId, e);
+                breaks = Collections.emptyList();
+            }
+            m_priceBreaksCache.put(productId, breaks);
+        }
+        return breaks;
+    }
+
+    /**
+     * Applies the quantity price tiers using the TOTAL units of the product in
+     * the current ticket (not just one line), then repaints the affected lines.
+     */
+    private void applyQuantityPrices(String productId) {
+        if (productId == null || m_oTicket == null) {
+            return;
+        }
+        double totalUnits = 0;
+        for (int i = 0; i < m_oTicket.getLinesCount(); i++) {
+            TicketLineInfo line = m_oTicket.getLine(i);
+            if (productId.equals(line.getProductID())) {
+                totalUnits += Math.abs(line.getMultiply());
+            }
+        }
+        List<PriceBreakInfo> breaks = getCachedPriceBreaks(productId);
+        for (int i = 0; i < m_oTicket.getLinesCount(); i++) {
+            TicketLineInfo line = m_oTicket.getLine(i);
+            if (!productId.equals(line.getProductID())) {
+                continue;
+            }
+            double base = line.getPrice();
+            String stored = line.getProperty("product.pricebase");
+            if (stored != null) {
+                try {
+                    base = Double.parseDouble(stored);
+                } catch (NumberFormatException e) {
+                    logger.log(Level.FINE, "Invalid base price in ticket line", e);
+                }
+            }
+            double price = ProductPricing.getUnitPrice(base, totalUnits, breaks);
+            if (Math.abs(price - line.getPrice()) > 0.0001) {
+                line.setPrice(price);
+                m_ticketlines.setTicketLine(i, line);
+            }
+        }
+        printPartialTotals();
+    }
+
     private void addTicketLine(ProductInfoExt oProduct, double dMul, double dPrice) {
         // Remember the regular price in the line so the quantity editor can
         // recalculate tiers without querying the (legacy, fragile) product view.
         java.util.Properties props = (java.util.Properties) oProduct.getProperties().clone();
         props.setProperty("product.pricebase", Double.toString(dPrice));
         // Quantity price tiers: choose the best configured price for this amount of units.
-        try {
-            List<PriceBreakInfo> breaks = dlSales.getPriceBreaks(oProduct.getID());
-            logger.log(Level.INFO, "Producto {0}: {1} tramos, base={2}, uds={3}",
-                    new Object[] {oProduct.getID(), breaks.size(), dPrice, dMul});
-            dPrice = ProductPricing.getUnitPrice(dPrice, dMul, breaks);
-        } catch (BasicException e) {
-            logger.log(Level.FINE, "Cannot read quantity price tiers for " + oProduct.getID(), e);
-        }
+        List<PriceBreakInfo> breaks = getCachedPriceBreaks(oProduct.getID());
+        logger.log(Level.INFO, "Producto {0}: {1} tramos, base={2}, uds={3}",
+                new Object[] {oProduct.getID(), breaks.size(), dPrice, dMul});
+        dPrice = ProductPricing.getUnitPrice(dPrice, dMul, breaks);
 // Added JDL 19.12.12 Variable Price Product    
 // take the number entered and convert to an amount rather than quantity. 
 // modified 02.05.13 read tax selected from the panel
@@ -689,9 +743,11 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
             }          
             }
                
+            // A tier may depend on the total units of this product in the ticket.
+            applyQuantityPrices(oLine.getProductID());
             visorTicketLine(oLine);
-            printPartialTotals();   
-            stateToZero();  
+            printPartialTotals();
+            stateToZero();
 
             // event receipt
 //            executeEventAndRefresh("ticket.change");
@@ -707,6 +763,7 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
             String ticketID = Integer.toString(m_oTicket.getTicketId());
             if (m_oTicket.getTicketId()==0){ticketID="No Sale";}
         
+            String removedProductId = m_oTicket.getLine(i).getProductID();
             dlSystem.execLineRemoved(
                     new Object[] {
                         m_App.getAppUserView().getUser().getName(),
@@ -731,8 +788,9 @@ public abstract class JPanelTicket extends JPanel implements JPanelView, BeanFac
                 }
             }  
                     
-            visorTicketLine(null); // borro el visor 
-            printPartialTotals(); // pinto los totales parciales...                           
+            applyQuantityPrices(removedProductId);
+            visorTicketLine(null); // borro el visor
+            printPartialTotals(); // pinto los totales parciales...
             stateToZero(); // Pongo a cero    
 
             // event receipt
@@ -2353,6 +2411,7 @@ if (pickupSize!=null && (Integer.parseInt(pickupSize) >= tmpPickupId.length())){
                 if (newline != null) {
                     // line has been modified
                     paintTicketLine(i, newline);
+                    applyQuantityPrices(newline.getProductID());
                 }
             } catch (BasicException e) {
                 new MessageInf(e).show(this);
